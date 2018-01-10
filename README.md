@@ -1,11 +1,18 @@
 # FinalYearProject
 Standards In Player Movement In Virtual Reality Games
 
-## 1. Create Project ##
+## 01. Create Project ##
 
-## 2. Set up Project with Template and Prototypes ##
+## 02. Set up Project with Template and Prototypes ##
 
-### - Add FPS Template for boilerplate code ###
-### - Implement first pass teleport locomotion ###
-### - Implement first pass Gesture locomotion ###
-### - Implement first pass Gamepad locomotion ###
+	- Add FPS Template for boilerplate code
+	- Implement first pass teleport locomotion
+	- Implement first pass Gesture locomotion
+	- Implement first pass Gamepad locomotion
+
+## 03. Comment Code and Minor Code Refactors ##
+
+	- Comment code for better code interpretation and improved readability
+	- Refactored variable names for improved readability
+	- Removed unused "boiler-plate" code used for enabling touchscreen input
+	- Reformatted README file layout

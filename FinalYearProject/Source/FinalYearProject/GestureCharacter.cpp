@@ -12,9 +12,6 @@
 #include "HeadMountedDisplayFunctionLibrary.h"
 #include "Kismet/GameplayStatics.h"
 #include "MotionControllerComponent.h"
-#include "Blueprint/UserWidget.h"
-#include "UObject/ConstructorHelpers.h"
-#include "Image.h"
 
 DEFINE_LOG_CATEGORY_STATIC(LogFPChar, Warning, All);
 
@@ -23,13 +20,7 @@ DEFINE_LOG_CATEGORY_STATIC(LogFPChar, Warning, All);
 
 AGestureCharacter::AGestureCharacter()
 {
-	ConstructorHelpers::FClassFinder<UUserWidget> BlueprintObj(TEXT("/Game/FirstPersonCPP/Blueprints/BP_FadeWidget"));
-	if (!ensure(BlueprintObj.Class != nullptr))
-	{
-		return;
-	}
-	FadeScreen = BlueprintObj.Class;
-
+	// initialise with default values
 	PreviousYLocation = 0.0f;
 	CurrentYLocation = 0.0f;
 
@@ -92,29 +83,16 @@ AGestureCharacter::AGestureCharacter()
 	VR_MuzzleLocation = CreateDefaultSubobject<USceneComponent>(TEXT("VR_MuzzleLocation"));
 	VR_MuzzleLocation->SetupAttachment(VR_Gun);
 	VR_MuzzleLocation->SetRelativeLocation(FVector(0.000004, 53.999992, 10.000000));
-	VR_MuzzleLocation->SetRelativeRotation(FRotator(0.0f, 90.0f, 0.0f));		// Counteract the rotation of the VR gun model.
+	VR_MuzzleLocation->SetRelativeRotation(FRotator(0.0f, 90.0f, 0.0f));	// Counteract the rotation of the VR gun model.
 
-																				// Uncomment the following line to turn motion controllers on by default:
-																				//bUsingMotionControllers = true;
+	// Uncomment the following line to turn motion controllers on by default:
+	//bUsingMotionControllers = true;
 }
 
 void AGestureCharacter::BeginPlay()
 {
 	// Call the base class  
 	Super::BeginPlay();
-
-
-	// Create the widget and store it.
-	//FadeScreen = CreateWidget<UUserWidget>(this, FadeScreenRef);
-	if (FadeScreen)
-	{
-		FadeWidget = CreateWidget<UUserWidget>(UGameplayStatics::GetPlayerController(GetWorld(), 0), FadeScreen);
-		if (FadeWidget != nullptr)
-		{
-			FadeWidget->AddToViewport();
-		}
-	}
-
 
 	//Attach gun mesh component to Skeleton, doing it here because the skeleton is not yet created in the constructor
 	FP_Gun->AttachToComponent(Mesh1P, FAttachmentTransformRules(EAttachmentRule::SnapToTarget, true), TEXT("GripPoint"));
@@ -153,11 +131,6 @@ void AGestureCharacter::SetupPlayerInputComponent(class UInputComponent* PlayerI
 	PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &ACharacter::Jump);
 	PlayerInputComponent->BindAction("Jump", IE_Released, this, &ACharacter::StopJumping);
 
-
-
-	// Enable touchscreen input
-	EnableTouchscreenMovement(PlayerInputComponent);
-
 	PlayerInputComponent->BindAction("ResetVR", IE_Pressed, this, &AGestureCharacter::OnResetVR);
 
 	// Bind movement events
@@ -176,35 +149,9 @@ void AGestureCharacter::SetupPlayerInputComponent(class UInputComponent* PlayerI
 }
 
 
-
 void AGestureCharacter::OnResetVR()
 {
 	UHeadMountedDisplayFunctionLibrary::ResetOrientationAndPosition();
-}
-
-void AGestureCharacter::BeginTouch(const ETouchIndex::Type FingerIndex, const FVector Location)
-{
-	if (TouchItem.bIsPressed == true)
-	{
-		return;
-	}
-	TouchItem.bIsPressed = true;
-	TouchItem.FingerIndex = FingerIndex;
-	TouchItem.Location = Location;
-	TouchItem.bMoved = false;
-}
-
-void AGestureCharacter::EndTouch(const ETouchIndex::Type FingerIndex, const FVector Location)
-{
-	if (TouchItem.bIsPressed == false)
-	{
-		return;
-	}
-	if ((FingerIndex == TouchItem.FingerIndex) && (TouchItem.bMoved == false))
-	{
-		
-	}
-	TouchItem.bIsPressed = false;
 }
 
 
@@ -238,11 +185,13 @@ void AGestureCharacter::GestureMoveForward(float Rate)
 		PlayerController->GetMousePosition(LocationX, LocationY);
 		//UE_LOG(LogTemp, Warning, TEXT("GestureMoveForward - LocX: %f, LocY: %f"), LocationX, LocationY);
 
+		// store the y axis mouse coordinate
 		CurrentYLocation = LocationY;
 		float DistTravelled = FMath::Abs(CurrentYLocation - PreviousYLocation);
 		float ForwardVelocity = DistTravelled * GetWorld()->GetDeltaSeconds();
 		//UE_LOG(LogTemp, Warning, TEXT("GestureMoveForward - DistTravelled: %f, FwdVel: %f"), DistTravelled, ForwardVelocity);
 
+		// update player location
 		auto CurrentLocation = GetActorLocation();
 		float ActorVel = FMath::Abs(CurrentLocation.X * ForwardVelocity * GetWorld()->GetDeltaSeconds());
 		if (ActorVel >= 1.0f)
@@ -266,20 +215,5 @@ void AGestureCharacter::LookUpAtRate(float Rate)
 {
 	// calculate delta for this frame from the rate information
 	AddControllerPitchInput(Rate * BaseLookUpRate * GetWorld()->GetDeltaSeconds());
-}
-
-bool AGestureCharacter::EnableTouchscreenMovement(class UInputComponent* PlayerInputComponent)
-{
-	if (FPlatformMisc::SupportsTouchInput() || GetDefault<UInputSettings>()->bUseMouseForTouch)
-	{
-		PlayerInputComponent->BindTouch(EInputEvent::IE_Pressed, this, &AGestureCharacter::BeginTouch);
-		PlayerInputComponent->BindTouch(EInputEvent::IE_Released, this, &AGestureCharacter::EndTouch);
-
-		//Commenting this out to be more consistent with FPS BP template.
-		//PlayerInputComponent->BindTouch(EInputEvent::IE_Repeat, this, &AFinalYearProjectCharacter::TouchUpdate);
-		return true;
-	}
-
-	return false;
 }
 

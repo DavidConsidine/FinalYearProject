@@ -21,12 +21,13 @@ DEFINE_LOG_CATEGORY_STATIC(LogFPChar, Warning, All);
 
 AFinalYearProjectCharacter::AFinalYearProjectCharacter()
 {
+	//** Instantiate object from blueprint reference path */
 	ConstructorHelpers::FClassFinder<UUserWidget> BlueprintObj(TEXT("/Game/FirstPersonCPP/Blueprints/BP_FadeWidget"));
 	if (!ensure(BlueprintObj.Class != nullptr))
 	{
 		return;
 	}
-	FadeScreen = BlueprintObj.Class;
+	FadeWidgetSubclass = BlueprintObj.Class;
 
 	// Set size for collision capsule
 	GetCapsuleComponent()->InitCapsuleSize(55.f, 96.0f);
@@ -99,13 +100,14 @@ void AFinalYearProjectCharacter::BeginPlay()
 	Super::BeginPlay();
 
 	
-		// Create the widget and store it.
-		//FadeScreen = CreateWidget<UUserWidget>(this, FadeScreenRef);
-	if (FadeScreen)
+	/** Create widget and store it */
+	if (FadeWidgetSubclass)
 	{
-		FadeWidget = CreateWidget<UUserWidget>(UGameplayStatics::GetPlayerController(GetWorld(), 0), FadeScreen);
+		FadeWidget = CreateWidget<UUserWidget>(UGameplayStatics::GetPlayerController(GetWorld(), 0), FadeWidgetSubclass);
 		if(FadeWidget != nullptr)
 		{ 
+			// TODO: Test in VR, make changes accordingly
+			/** Add widget to player viewport */
 			FadeWidget->AddToViewport();
 		}
 	}
@@ -126,7 +128,9 @@ void AFinalYearProjectCharacter::BeginPlay()
 		Mesh1P->SetHiddenInGame(false, true);
 	}
 
+	/** Set initial State of teleport state machine */
 	SetTelState(TeleportState::Wait);
+	/** Initialise to a default (0-value Vector) */
 	CurrentTeleportPosition = FVector(0);
 }
 
@@ -136,20 +140,22 @@ void AFinalYearProjectCharacter::Tick(float DeltaTime)
 
 	//UE_LOG(LogTemp, Warning, TEXT("Player character Tick function, DeltaTime: %f "), DeltaTime);
 
-	if (Firing && TimePassedBetweenShots >= FireRateDelay)
+	/** Fire projectiles at rate of fire */
+	if (bFiring && TimeBetweenShotsFired >= FireRate)
 	{
 		OnFire();
-		TimePassedBetweenShots = 0.0f;
+		TimeBetweenShotsFired = 0.0f;
 	}
 	else
 	{
-		TimePassedBetweenShots += DeltaTime;
+		TimeBetweenShotsFired += DeltaTime;
 	}
 
 	
-	//check state
+	/** Update Teleportation State Machine */
 	switch (TelState)
 	{
+		// Default State. 
 		case Wait:
 			break;
 		case FadeOut:
@@ -191,13 +197,8 @@ void AFinalYearProjectCharacter::SetupPlayerInputComponent(class UInputComponent
 	PlayerInputComponent->BindAction("Teleport", IE_Released, this, &AFinalYearProjectCharacter::StartTeleport);
 
 	// Bind fire event
-	//PlayerInputComponent->BindAction("Fire", IE_Pressed, this, &AFinalYearProjectCharacter::OnFire);
 	PlayerInputComponent->BindAction("Fire", IE_Pressed, this, &AFinalYearProjectCharacter::StartFiring);
 	PlayerInputComponent->BindAction("Fire", IE_Released, this, &AFinalYearProjectCharacter::StopFiring);
-
-
-	// Enable touchscreen input
-	EnableTouchscreenMovement(PlayerInputComponent);
 
 	PlayerInputComponent->BindAction("ResetVR", IE_Pressed, this, &AFinalYearProjectCharacter::OnResetVR);
 
@@ -216,25 +217,28 @@ void AFinalYearProjectCharacter::SetupPlayerInputComponent(class UInputComponent
 
 void AFinalYearProjectCharacter::StartFiring()
 {
-	Firing = true;
+	bFiring = true;
 }
 
 void AFinalYearProjectCharacter::StopFiring()
 {
-	Firing = false;
+	bFiring = false;
 }
 
 void AFinalYearProjectCharacter::StartTeleport()
 {
 	UE_LOG(LogTemp, Warning, TEXT("StartTeleport"))
 
+	// Check for valid location to teleport to
 	if (TelState == TeleportState::Wait)
 	{
 		// if valid teleport position
 		FHitResult RV_Hit(ForceInit);
 
+		// Store a valid location to move player to and update Teleportation State Machine
 		if (CheckValidTeleportLocation(RV_Hit))
 		{
+			// TODO: Validate location; checking for collisions/clipping with objects/environment
 			CurrentTeleportPosition = RV_Hit.Location;
 			UE_LOG(LogTemp, Warning, TEXT("StartTeleport - Valid Teleport start"))
 			SetTelState(TeleportState::FadeOut);
@@ -301,18 +305,21 @@ void AFinalYearProjectCharacter::OnFire()
 	}
 }
 
+//** Postition Player at valid location */
 void AFinalYearProjectCharacter::OnTeleport(FVector TeleportPosition)
 {
 	if (TeleportPosition == FVector(0)) return;
 	SetActorLocation(TeleportPosition);
 }
 
+/** Check if location to teleport to is within valid distance from the player */
 bool AFinalYearProjectCharacter::CheckValidTeleportLocation(FHitResult & HitResult)
 {
 	FCollisionQueryParams RV_TraceParams = FCollisionQueryParams(FName(TEXT("RV_Trace")), true, this);
 	FVector CamPos = FirstPersonCameraComponent->GetComponentLocation();
 	FRotator CameraRot = FirstPersonCameraComponent->GetComponentRotation();
 	FVector CamDir = FirstPersonCameraComponent->GetForwardVector();
+	// TODO: Expose variable to the Editor
 	const float PlayerInteractionDistance = 1000;
 	FVector End = CamPos + (CameraRot.Vector() * PlayerInteractionDistance);
 
@@ -333,7 +340,7 @@ bool AFinalYearProjectCharacter::CheckValidTeleportLocation(FHitResult & HitResu
 
 bool AFinalYearProjectCharacter::DoScreenFade(bool FadeOut)
 {
-
+	// Get reference to Blueprint's Image component
 	auto WidgetImage = FadeWidget->GetWidgetFromName("FadeColour");
 
 	if (WidgetImage == nullptr)
@@ -348,20 +355,17 @@ bool AFinalYearProjectCharacter::DoScreenFade(bool FadeOut)
 		UE_LOG(LogTemp, Warning, TEXT("DoScreenFade : Image == nullptr"));
 		return false;
 	}
+
 	float FadeRate = FadeOut ? 2.0f : -2.0f;
-	
+	// Update Alpha value of Image
 	float NewAlpha = FadeRate * GetWorld()->GetDeltaSeconds() + Image->ColorAndOpacity.A;
 	Image->SetOpacity(FMath::Clamp(NewAlpha, 0.0f, 1.0f));
 
+	// Check if fade in/out has completed
 	if ((!FadeOut && NewAlpha <= 0.0f) || (FadeOut && NewAlpha >= 1.0f))
 	{
 		return true;
 	}
-	//auto Viewport = GetWorld()->GetGameViewport();
-	
-	/*auto PC = GetWorld()->GetFirstPlayerController();
-	if (PC == nullptr) return;
-	PC->ClientSetCameraFade(true, FColor::Black, FVector2D(0.5, 0.5), 5.0);*/
 
 	return false;
 }
@@ -372,68 +376,6 @@ void AFinalYearProjectCharacter::OnResetVR()
 	UHeadMountedDisplayFunctionLibrary::ResetOrientationAndPosition();
 }
 
-void AFinalYearProjectCharacter::BeginTouch(const ETouchIndex::Type FingerIndex, const FVector Location)
-{
-	if (TouchItem.bIsPressed == true)
-	{
-		return;
-	}
-	TouchItem.bIsPressed = true;
-	TouchItem.FingerIndex = FingerIndex;
-	TouchItem.Location = Location;
-	TouchItem.bMoved = false;
-}
-
-void AFinalYearProjectCharacter::EndTouch(const ETouchIndex::Type FingerIndex, const FVector Location)
-{
-	if (TouchItem.bIsPressed == false)
-	{
-		return;
-	}
-	if ((FingerIndex == TouchItem.FingerIndex) && (TouchItem.bMoved == false))
-	{
-		OnFire();
-	}
-	TouchItem.bIsPressed = false;
-}
-
-//Commenting this section out to be consistent with FPS BP template.
-//This allows the user to turn without using the right virtual joystick
-
-//void AFinalYearProjectCharacter::TouchUpdate(const ETouchIndex::Type FingerIndex, const FVector Location)
-//{
-//	if ((TouchItem.bIsPressed == true) && (TouchItem.FingerIndex == FingerIndex))
-//	{
-//		if (TouchItem.bIsPressed)
-//		{
-//			if (GetWorld() != nullptr)
-//			{
-//				UGameViewportClient* ViewportClient = GetWorld()->GetGameViewport();
-//				if (ViewportClient != nullptr)
-//				{
-//					FVector MoveDelta = Location - TouchItem.Location;
-//					FVector2D ScreenSize;
-//					ViewportClient->GetViewportSize(ScreenSize);
-//					FVector2D ScaledDelta = FVector2D(MoveDelta.X, MoveDelta.Y) / ScreenSize;
-//					if (FMath::Abs(ScaledDelta.X) >= 4.0 / ScreenSize.X)
-//					{
-//						TouchItem.bMoved = true;
-//						float Value = ScaledDelta.X * BaseTurnRate;
-//						AddControllerYawInput(Value);
-//					}
-//					if (FMath::Abs(ScaledDelta.Y) >= 4.0 / ScreenSize.Y)
-//					{
-//						TouchItem.bMoved = true;
-//						float Value = ScaledDelta.Y * BaseTurnRate;
-//						AddControllerPitchInput(Value);
-//					}
-//					TouchItem.Location = Location;
-//				}
-//				TouchItem.Location = Location;
-//			}
-//		}
-//	}
-//}
 
 void AFinalYearProjectCharacter::MoveForward(float Value)
 {
@@ -463,19 +405,4 @@ void AFinalYearProjectCharacter::LookUpAtRate(float Rate)
 {
 	// calculate delta for this frame from the rate information
 	AddControllerPitchInput(Rate * BaseLookUpRate * GetWorld()->GetDeltaSeconds());
-}
-
-bool AFinalYearProjectCharacter::EnableTouchscreenMovement(class UInputComponent* PlayerInputComponent)
-{
-	if (FPlatformMisc::SupportsTouchInput() || GetDefault<UInputSettings>()->bUseMouseForTouch)
-	{
-		PlayerInputComponent->BindTouch(EInputEvent::IE_Pressed, this, &AFinalYearProjectCharacter::BeginTouch);
-		PlayerInputComponent->BindTouch(EInputEvent::IE_Released, this, &AFinalYearProjectCharacter::EndTouch);
-
-		//Commenting this out to be more consistent with FPS BP template.
-		//PlayerInputComponent->BindTouch(EInputEvent::IE_Repeat, this, &AFinalYearProjectCharacter::TouchUpdate);
-		return true;
-	}
-	
-	return false;
 }

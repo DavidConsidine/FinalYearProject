@@ -9,6 +9,8 @@
 class UInputComponent;
 class UUserWidget;
 
+
+/** State machine enum for managing Teleportation */
 UENUM()
 enum TeleportState {
 	Wait = 0,
@@ -21,8 +23,6 @@ UCLASS(config=Game)
 class AFinalYearProjectCharacter : public ACharacter
 {
 	GENERATED_BODY()
-
-	
 
 	/** Pawn mesh: 1st person view (arms; seen only by self) */
 	UPROPERTY(VisibleDefaultsOnly, Category=Mesh)
@@ -48,7 +48,7 @@ class AFinalYearProjectCharacter : public ACharacter
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 	class UCameraComponent* FirstPersonCameraComponent;
 
-	/** Motion controller (right hand) */
+	/** Motion controller (right hand) */	// AllowPrivateAccess: If true, properties defined in the C++ private scope will be accessible to blueprints
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	class UMotionControllerComponent* R_MotionController;
 
@@ -57,6 +57,7 @@ class AFinalYearProjectCharacter : public ACharacter
 	class UMotionControllerComponent* L_MotionController;
 
 public:
+	/** Constructor */
 	AFinalYearProjectCharacter();
 
 protected:
@@ -65,7 +66,8 @@ protected:
 	virtual void Tick(float DeltaTime) override;
 
 public:
-	TSubclassOf<UUserWidget> FadeScreen;
+	TSubclassOf<UUserWidget> FadeWidgetSubclass;
+	/** Teleports fade in/out by changing alpha value */
 	UUserWidget* FadeWidget;
 
 	/** Base turn rate, in deg/sec. Other scaling may affect final turn rate. */
@@ -97,27 +99,31 @@ public:
 	uint32 bUsingMotionControllers : 1;
 
 protected:
-	bool Firing = false;
+	/** Firing flag */
+	bool bFiring = false;
 
+	/** Current Teleport state machine */
 	TeleportState TelState = TeleportState::Wait;
 
-	
-
+	/** Stores currently selected position to move player to */
 	FVector CurrentTeleportPosition;
 
+	/** Minimum time (in seconds) between consecutive calls to OnFire() can be made */
 	UPROPERTY(EditAnywhere, Category = "FireRate")
-	float FireRateDelay = 0.5f;
+	float FireRate = 0.5f;
 
-	float TimePassedBetweenShots = 0.0f;
+	/** Stores time (in seconds) passed since OnFire() was last called */
+	float TimeBetweenShotsFired = 0.0f;
 
-	/** Set Firing Flag */
+	/** Set Firing Flag to true */
 	void StartFiring();
 
 	void StopFiring();
 
-	/** Set Firing Flag */
+	/** Set Firing Flag to false */
 	void StartTeleport();
 
+	/** Update current teleport state */
 	void SetTelState(TeleportState NewState);
 
 	/** Fires a projectile. */
@@ -128,6 +134,7 @@ protected:
 
 	bool CheckValidTeleportLocation(FHitResult& HitResult);
 
+	/** Perform fade in/out */
 	bool DoScreenFade(bool FadeOut);
 
 
@@ -151,32 +158,11 @@ protected:
 	 * @param Rate	This is a normalized rate, i.e. 1.0 means 100% of desired turn rate
 	 */
 	void LookUpAtRate(float Rate);
-
-	struct TouchData
-	{
-		TouchData() { bIsPressed = false;Location=FVector::ZeroVector;}
-		bool bIsPressed;
-		ETouchIndex::Type FingerIndex;
-		FVector Location;
-		bool bMoved;
-	};
-	void BeginTouch(const ETouchIndex::Type FingerIndex, const FVector Location);
-	void EndTouch(const ETouchIndex::Type FingerIndex, const FVector Location);
-	void TouchUpdate(const ETouchIndex::Type FingerIndex, const FVector Location);
-	TouchData	TouchItem;
 	
 protected:
 	// APawn interface
 	virtual void SetupPlayerInputComponent(UInputComponent* InputComponent) override;
 	// End of APawn interface
-
-	/* 
-	 * Configures input for touchscreen devices if there is a valid touch interface for doing so 
-	 *
-	 * @param	InputComponent	The input component pointer to bind controls to
-	 * @returns true if touch controls were enabled.
-	 */
-	bool EnableTouchscreenMovement(UInputComponent* InputComponent);
 
 public:
 	/** Returns Mesh1P subobject **/
