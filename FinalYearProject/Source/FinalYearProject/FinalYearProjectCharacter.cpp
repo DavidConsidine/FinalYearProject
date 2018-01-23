@@ -129,7 +129,7 @@ void AFinalYearProjectCharacter::BeginPlay()
 	}
 
 	/** Set initial State of teleport state machine */
-	SetTelState(TeleportState::Wait);
+	SetTelState(ETeleportState::Wait);
 	/** Initialise to a default (0-value Vector) */
 	CurrentTeleportPosition = FVector(0);
 }
@@ -161,23 +161,29 @@ void AFinalYearProjectCharacter::Tick(float DeltaTime)
 		case FadeOut:
 			if(DoScreenFade(true))
 			{ 
-				SetTelState(TeleportState::Teleport);
+				SetTelState(ETeleportState::Teleport);
 			}
 			break;
 		case Teleport:
 			OnTeleport(CurrentTeleportPosition);
-			SetTelState(TeleportState::FadeIn);
+			SetTelState(ETeleportState::FadeIn);
 			break;
 		case FadeIn:
 			if (DoScreenFade(false))
 			{
 				// reset all variables
 				CurrentTeleportPosition = FVector(0);
-				SetTelState(TeleportState::Wait);
+				SetTelState(ETeleportState::Wait);
 			}
 			break;
 		default:
 			break;
+	}
+
+	// update movement via gesture based movement
+	if (bUsingMotionControllers)
+	{
+		CheckVRGestureMovement();
 	}
 }
 
@@ -200,6 +206,14 @@ void AFinalYearProjectCharacter::SetupPlayerInputComponent(class UInputComponent
 	PlayerInputComponent->BindAction("Fire", IE_Pressed, this, &AFinalYearProjectCharacter::StartFiring);
 	PlayerInputComponent->BindAction("Fire", IE_Released, this, &AFinalYearProjectCharacter::StopFiring);
 
+
+	// Bind VR Gesture Movement (Left Motion Controller) event
+	PlayerInputComponent->BindAction("VR_GestureMovement_L", IE_Pressed, this, &AFinalYearProjectCharacter::SetIsActiveLeftMController);
+	PlayerInputComponent->BindAction("VR_GestureMovement_L", IE_Released, this, &AFinalYearProjectCharacter::SetIsNotActiveLeftMController);
+	// Bind VR Gesture Movement (Right Motion Controller) event
+	PlayerInputComponent->BindAction("VR_GestureMovement_R", IE_Pressed, this, &AFinalYearProjectCharacter::SetIsActiveRightMController);
+	PlayerInputComponent->BindAction("VR_GestureMovement_R", IE_Released, this, &AFinalYearProjectCharacter::SetIsNotActiveRightMController);
+
 	PlayerInputComponent->BindAction("ResetVR", IE_Pressed, this, &AFinalYearProjectCharacter::OnResetVR);
 
 	// Bind movement events
@@ -215,11 +229,13 @@ void AFinalYearProjectCharacter::SetupPlayerInputComponent(class UInputComponent
 	PlayerInputComponent->BindAxis("LookUpRate", this, &AFinalYearProjectCharacter::LookUpAtRate);
 }
 
+// Checks flag for input on firing weapon 
 void AFinalYearProjectCharacter::StartFiring()
 {
 	bFiring = true;
 }
 
+// checks flag for end of input on firing weapon
 void AFinalYearProjectCharacter::StopFiring()
 {
 	bFiring = false;
@@ -230,7 +246,7 @@ void AFinalYearProjectCharacter::StartTeleport()
 	UE_LOG(LogTemp, Warning, TEXT("StartTeleport"))
 
 	// Check for valid location to teleport to
-	if (TelState == TeleportState::Wait)
+	if (TelState == ETeleportState::Wait)
 	{
 		// if valid teleport position
 		FHitResult RV_Hit(ForceInit);
@@ -241,7 +257,7 @@ void AFinalYearProjectCharacter::StartTeleport()
 			// TODO: Validate location; checking for collisions/clipping with objects/environment
 			CurrentTeleportPosition = RV_Hit.Location;
 			UE_LOG(LogTemp, Warning, TEXT("StartTeleport - Valid Teleport start"))
-			SetTelState(TeleportState::FadeOut);
+			SetTelState(ETeleportState::FadeOut);
 		}
 		else
 		{
@@ -250,12 +266,36 @@ void AFinalYearProjectCharacter::StartTeleport()
 	}
 }
 
-void AFinalYearProjectCharacter::SetTelState(TeleportState NewState)
+// set player's current state with regard to teleportation
+void AFinalYearProjectCharacter::SetTelState(ETeleportState NewState)
 {
 	UE_LOG(LogTemp, Warning, TEXT("SetTelState: Setting State from %d to %d"), (int)TelState, (int)NewState)
 	TelState = NewState;
 }
 
+// check flag to track motion controller for gesture based movement
+void AFinalYearProjectCharacter::SetIsActiveLeftMController()
+{
+	bIsActiveLeftMController = true;
+}
+
+// check flag to stop tracking motion controller for gesture based movement
+void AFinalYearProjectCharacter::SetIsNotActiveLeftMController()
+{
+	bIsActiveLeftMController = false;
+}
+
+// check flag to track motion controller for gesture based movement
+void AFinalYearProjectCharacter::SetIsActiveRightMController()
+{
+	bIsActiveRightMController = true;
+}
+
+// check flag to stop tracking motion controller for gesture based movement
+void AFinalYearProjectCharacter::SetIsNotActiveRightMController()
+{
+	bIsActiveRightMController = false;
+}
 
 void AFinalYearProjectCharacter::OnFire()
 {
@@ -368,6 +408,113 @@ bool AFinalYearProjectCharacter::DoScreenFade(bool FadeOut)
 	}
 
 	return false;
+}
+
+void AFinalYearProjectCharacter::CheckVRGestureMovement()
+{
+	float Distance;
+	FVector Direction;
+	if (bIsActiveLeftMController && bIsActiveRightMController)
+	{
+		// check movement distance of both controllers
+		Distance = GetControllerDistance(EMControllerGestureActiveState::Both);
+		Direction = GetControllerDirection(EMControllerGestureActiveState::Both);
+		AddPlayerMovement(Direction * (Distance * MovementSpeed));
+	}
+	else if (bIsActiveLeftMController)
+	{
+		// check movement distance of left controller
+		Distance = GetControllerDistance(EMControllerGestureActiveState::Left);
+		Direction = GetControllerDirection(EMControllerGestureActiveState::Left);
+		AddPlayerMovement(Direction * (Distance * MovementSpeed));
+	}
+	else if (bIsActiveRightMController)
+	{
+		// check movement distance of right controller
+		Distance = GetControllerDistance(EMControllerGestureActiveState::Right);
+		Direction = GetControllerDirection(EMControllerGestureActiveState::Right);
+		AddPlayerMovement(Direction * (Distance * MovementSpeed));
+	}
+
+	// update controller relative positions
+	PreviousLeftMControllerPos = L_MotionController->GetRelativeTransform().GetLocation();
+	PreviousRightMControllerPos = R_MotionController->GetRelativeTransform().GetLocation();
+}
+
+float AFinalYearProjectCharacter::GetControllerDistance(EMControllerGestureActiveState ActiveState)
+{
+	// get distance motion controller(s) have moved since last check
+	switch(ActiveState)
+	{
+		case EMControllerGestureActiveState::Both:
+		{
+			FVector DeltaPositionL;
+			FVector DeltaPositionR;
+
+			DeltaPositionL = L_MotionController->GetRelativeTransform().GetLocation() - PreviousLeftMControllerPos;
+			DeltaPositionR = R_MotionController->GetRelativeTransform().GetLocation() - PreviousRightMControllerPos;
+			return DeltaPositionL.Size() + DeltaPositionR.Size();
+		}
+		case EMControllerGestureActiveState::Left:
+		{
+			FVector DeltaPosition;
+			DeltaPosition = L_MotionController->GetRelativeTransform().GetLocation() - PreviousLeftMControllerPos;
+			return DeltaPosition.Size();
+		}
+		case EMControllerGestureActiveState::Right:
+		{
+			FVector DeltaPosition;
+			DeltaPosition = R_MotionController->GetRelativeTransform().GetLocation() - PreviousRightMControllerPos;
+			return DeltaPosition.Size();
+		}
+		default:
+			break;
+	}
+	return 0.0f;
+}
+
+FVector AFinalYearProjectCharacter::GetControllerDirection(EMControllerGestureActiveState ActiveState)
+{
+	// get forward direction of active motion controller or the average direction between two active motion controllers
+	switch (ActiveState)
+	{
+	case EMControllerGestureActiveState::Both:
+	{
+		FVector Direction;
+		FVector ForVecL;
+		FVector ForVecR;
+		ForVecL = L_MotionController->GetForwardVector();
+		ForVecR = R_MotionController->GetForwardVector();
+		Direction = (FVector(ForVecL.X, ForVecL.Y, 0.0f).GetSafeNormal() + FVector(ForVecR.X, ForVecR.Y, 0.0f).GetSafeNormal()) / 2.0f;
+		return Direction;
+	}
+	case EMControllerGestureActiveState::Left:
+	{
+		FVector Direction;
+		FVector ForVec;
+		ForVec = L_MotionController->GetForwardVector();
+		Direction = FVector(ForVec.X, ForVec.Y, 0.0f).GetSafeNormal();
+		return Direction;
+	}
+	case EMControllerGestureActiveState::Right:
+	{
+		FVector Direction;
+		FVector ForVec;
+		ForVec = R_MotionController->GetForwardVector();
+		Direction = FVector(ForVec.X, ForVec.Y, 0.0f).GetSafeNormal();
+		return Direction;
+	}
+	default:
+		break;
+	}
+	return FVector();
+}
+
+void AFinalYearProjectCharacter::AddPlayerMovement(FVector ControllerVector)
+{
+	// update player location
+	FVector ActorLoc = GetActorLocation();
+	SetActorLocation(ActorLoc + ControllerVector);
 }
 
 

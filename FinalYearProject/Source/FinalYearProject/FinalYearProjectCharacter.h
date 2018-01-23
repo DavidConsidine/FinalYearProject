@@ -12,11 +12,18 @@ class UUserWidget;
 
 /** State machine enum for managing Teleportation */
 UENUM()
-enum TeleportState {
+enum ETeleportState {
 	Wait = 0,
 	FadeOut,
 	Teleport,
 	FadeIn,
+};
+
+UENUM()
+enum EMControllerGestureActiveState {
+	Both = 0,
+	Left,
+	Right
 };
 
 UCLASS(config=Game)
@@ -99,11 +106,27 @@ public:
 	uint32 bUsingMotionControllers : 1;
 
 protected:
+	/** Should Left Motion Controller motion be tracked to update player movement */
+	bool bIsActiveLeftMController = false;
+
+	/** Should Right Motion Controller motion be tracked to update player movement */
+	bool bIsActiveRightMController = false;
+
+	/* Exposed player movement speed variable */
+	UPROPERTY(EditAnywhere, Category = "MovementSpeed")
+	float MovementSpeed = 1.0f;
+
+	/** Stores Last captured controller position */
+	FVector PreviousLeftMControllerPos;
+
+	/** Stores Last captured controller position */
+	FVector PreviousRightMControllerPos;
+
 	/** Firing flag */
 	bool bFiring = false;
 
 	/** Current Teleport state machine */
-	TeleportState TelState = TeleportState::Wait;
+	ETeleportState TelState = ETeleportState::Wait;
 
 	/** Stores currently selected position to move player to */
 	FVector CurrentTeleportPosition;
@@ -118,13 +141,22 @@ protected:
 	/** Set Firing Flag to true */
 	void StartFiring();
 
+	/** Set Firing Flag to false */
 	void StopFiring();
 
 	/** Set Firing Flag to false */
 	void StartTeleport();
 
 	/** Update current teleport state */
-	void SetTelState(TeleportState NewState);
+	void SetTelState(ETeleportState NewState);
+
+	/** Sets flag depending on player input (grip(s) pressed/released) */
+	void SetIsActiveLeftMController();
+	void SetIsNotActiveLeftMController();
+
+	/** Sets flag depending on player input (grip(s) pressed/released) */
+	void SetIsActiveRightMController();
+	void SetIsNotActiveRightMController();
 
 	/** Fires a projectile. */
 	void OnFire();
@@ -137,6 +169,17 @@ protected:
 	/** Perform fade in/out */
 	bool DoScreenFade(bool FadeOut);
 
+	/** Calculate Player movement from gesture locomotion */
+	void CheckVRGestureMovement();
+
+	/** Get Controller relative distance from root, since last update */
+	float GetControllerDistance(EMControllerGestureActiveState ActiveState);
+
+	/** Get Controller direction vector */
+	FVector GetControllerDirection(EMControllerGestureActiveState ActiveState);
+
+	/** Update Player movement by vector calculated from active Motion Controller(s) */
+	void AddPlayerMovement(FVector ControllerVector);
 
 	/** Resets HMD orientation and position in VR. */
 	void OnResetVR();

@@ -11,9 +11,11 @@ class FINALYEARPROJECT_API AGestureCharacter : public ACharacter
 {
 	GENERATED_BODY()
 
-	/** mouse screen coordinate values*/
-	float PreviousYLocation;
-	float CurrentYLocation;
+	/** Axis input from mouse y axis values*/
+	float AxisInput;
+
+	/** Flag to capture mouse movement */
+	bool bVR_MovementActive;
 
 	/** Pawn mesh: 1st person view (arms; seen only by self) */
 	UPROPERTY(VisibleDefaultsOnly, Category = Mesh)
@@ -93,6 +95,12 @@ protected:
 
 	/** Handles moving forward/backward */
 	void MoveForward(float Val);
+
+	/** Set movement flag to true */
+	void SetVRMovementActive();
+
+	/** Set movement flag to false */
+	void SetVRMovementInactive();
 
 	/** Handles stafing movement, left and right */
 	void MoveRight(float Val);

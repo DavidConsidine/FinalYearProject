@@ -16,3 +16,9 @@ Standards In Player Movement In Virtual Reality Games
 	- Refactored variable names for improved readability
 	- Removed unused "boiler-plate" code used for enabling touchscreen input
 	- Reformatted README file layout
+
+## 04. Add Implementation of gesture based movement ##
+
+	- Add implementation for capturing motion controller movement and direction.
+	- Using this information to calculate player movement.
+	- Added Comments.

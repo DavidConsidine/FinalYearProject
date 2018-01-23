@@ -20,9 +20,8 @@ DEFINE_LOG_CATEGORY_STATIC(LogFPChar, Warning, All);
 
 AGestureCharacter::AGestureCharacter()
 {
-	// initialise with default values
-	PreviousYLocation = 0.0f;
-	CurrentYLocation = 0.0f;
+	// initialise with default value
+	AxisInput = 0.0f;
 
 	// Set size for collision capsule
 	GetCapsuleComponent()->InitCapsuleSize(55.f, 96.0f);
@@ -117,6 +116,11 @@ void AGestureCharacter::Tick(float DeltaTime)
 
 	//UE_LOG(LogTemp, Warning, TEXT("Player character Tick function, DeltaTime: %f "), DeltaTime);
 
+	if (bVR_MovementActive)
+	{
+		AddMovementInput(GetActorForwardVector(), AxisInput * DeltaTime);
+	}
+
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -137,10 +141,14 @@ void AGestureCharacter::SetupPlayerInputComponent(class UInputComponent* PlayerI
 	PlayerInputComponent->BindAxis("MoveForward", this, &AGestureCharacter::MoveForward);
 	PlayerInputComponent->BindAxis("MoveRight", this, &AGestureCharacter::MoveRight);
 
+	// Bind jump events
+	PlayerInputComponent->BindAction("VR_GestureMovement", IE_Pressed, this, &AGestureCharacter::SetVRMovementActive);
+	PlayerInputComponent->BindAction("VR_GestureMovement", IE_Released, this, &AGestureCharacter::SetVRMovementInactive);
+
 	// We have 2 versions of the rotation bindings to handle different kinds of devices differently
 	// "turn" handles devices that provide an absolute delta, such as a mouse.
 	// "turnrate" is for devices that we choose to treat as a rate of change, such as an analog joystick
-	//PlayerInputComponent->BindAxis("Turn", this, &APawn::AddControllerYawInput);
+	PlayerInputComponent->BindAxis("Turn", this, &APawn::AddControllerYawInput);
 	//PlayerInputComponent->BindAxis("TurnRate", this, &AGestureCharacter::TurnAtRate);
 	PlayerInputComponent->BindAxis("LookUpRate", this, &AGestureCharacter::LookUpAtRate);
 
@@ -164,6 +172,16 @@ void AGestureCharacter::MoveForward(float Value)
 	}
 }
 
+void AGestureCharacter::SetVRMovementActive()
+{
+	bVR_MovementActive = true;
+}
+
+void AGestureCharacter::SetVRMovementInactive()
+{
+	bVR_MovementActive = false;
+}
+
 void AGestureCharacter::MoveRight(float Value)
 {
 	if (Value != 0.0f)
@@ -175,34 +193,10 @@ void AGestureCharacter::MoveRight(float Value)
 
 void AGestureCharacter::GestureMoveForward(float Rate)
 {
-	//UE_LOG(LogTemp, Warning, TEXT("GestureMoveForward"))
-	APlayerController* PlayerController = Cast<APlayerController>(GetController());
-	if (PlayerController != nullptr)
+	if (bVR_MovementActive)
 	{
-		// Get the coordinates of the mouse from our controller  
-		float LocationX;
-		float LocationY;
-		PlayerController->GetMousePosition(LocationX, LocationY);
-		//UE_LOG(LogTemp, Warning, TEXT("GestureMoveForward - LocX: %f, LocY: %f"), LocationX, LocationY);
-
-		// store the y axis mouse coordinate
-		CurrentYLocation = LocationY;
-		float DistTravelled = FMath::Abs(CurrentYLocation - PreviousYLocation);
-		float ForwardVelocity = DistTravelled * GetWorld()->GetDeltaSeconds();
-		//UE_LOG(LogTemp, Warning, TEXT("GestureMoveForward - DistTravelled: %f, FwdVel: %f"), DistTravelled, ForwardVelocity);
-
-		// update player location
-		auto CurrentLocation = GetActorLocation();
-		float ActorVel = FMath::Abs(CurrentLocation.X * ForwardVelocity * GetWorld()->GetDeltaSeconds());
-		if (ActorVel >= 1.0f)
-		{
-			AddMovementInput(GetActorForwardVector(), ActorVel);
-		}
-		
-		UE_LOG(LogTemp, Warning, TEXT("GestureMoveForward - ActorVel: %f"), ActorVel);
-		PreviousYLocation = CurrentYLocation;
+		AxisInput = FMath::Abs<float>(Rate);
 	}
-
 }
 
 void AGestureCharacter::TurnAtRate(float Rate)
