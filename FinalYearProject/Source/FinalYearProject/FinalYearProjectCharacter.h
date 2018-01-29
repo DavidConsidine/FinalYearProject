@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
+#include "VRCharacter.h"
 #include "FinalYearProjectCharacter.generated.h"
 
 class UInputComponent;
@@ -11,20 +12,20 @@ class UUserWidget;
 
 
 /** State machine enum for managing Teleportation */
-UENUM()
-enum ETeleportState {
-	Wait = 0,
-	FadeOut,
-	Teleport,
-	FadeIn,
-};
-
-UENUM()
-enum EMControllerGestureActiveState {
-	Both = 0,
-	Left,
-	Right
-};
+//UENUM()
+//enum ETeleportState {
+//	Wait = 0,
+//	FadeOut,
+//	Teleport,
+//	FadeIn,
+//};
+//
+//UENUM()
+//enum EMControllerGestureActiveState {
+//	Both = 0,
+//	Left,
+//	Right
+//};
 
 UCLASS(config=Game)
 class AFinalYearProjectCharacter : public ACharacter

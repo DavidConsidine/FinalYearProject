@@ -22,3 +22,11 @@ Standards In Player Movement In Virtual Reality Games
 	- Add implementation for capturing motion controller movement and direction.
 	- Using this information to calculate player movement.
 	- Added Comments.
+
+## 05. Further work on teleport locomotion & VR Controller class ##
+
+	- Add Class to incorporate motion controller. (.cpp currently empty)
+	- Updated teleportation with visual cue and 2-step (aim, cancel or verify) implementation
+	- Created new Directory for Meshes.
+	- Created new level for testing (TestingGrounds_P)
+	- Added Comments.
