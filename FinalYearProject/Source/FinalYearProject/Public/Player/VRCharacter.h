@@ -37,6 +37,7 @@ class UVRTeleportCursorComponent;
 class AVRTeleportCursor;
 class AVRController;
 class USceneComponent;
+class UUserWidget;
 
 UCLASS()
 class FINALYEARPROJECT_API AVRCharacter : public ACharacter
@@ -54,15 +55,15 @@ protected:
 
 	/** First person camera */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
-	UCameraComponent* FirstPersonCameraComp;
+	UCameraComponent* CameraComp;
 
-	/** Motion controller (right hand) */	// AllowPrivateAccess: If true, properties defined in the C++ private scope will be accessible to blueprints
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
-	UMotionControllerComponent* R_MotionController;
+	///** Motion controller (right hand) */	// AllowPrivateAccess: If true, properties defined in the C++ private scope will be accessible to blueprints
+	//UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	//UMotionControllerComponent* R_MotionController;
 
-	/** Motion controller (left hand) */
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
-	UMotionControllerComponent* L_MotionController;
+	///** Motion controller (left hand) */
+	//UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	//UMotionControllerComponent* L_MotionController;
 
 	/** Teleport cursor */
 	/*UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
@@ -83,6 +84,15 @@ protected:
 	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = "MotionController")
 	AVRController* VRController_R;
 
+	// fade in screen
+	TSubclassOf<UUserWidget> WidgetClass;
+
+	UUserWidget* ScreenFadeWidget;
+
+
+
+
+
 protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera)
@@ -97,7 +107,7 @@ protected:
 	float BaseLookUpRate;
 
 	/** Current Teleport state machine */
-	ETeleportState TelState = ETeleportState::Wait;
+	ETeleportState TelState;
 
 	/** Stores currently selected position to move player to */
 	FVector CurrentTeleportPosition;
@@ -107,10 +117,13 @@ protected:
 
 	bool bTeleporting;
 
+	bool bValidTeleportPosition;
+
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Teleport")
 	float MaxTeleportDistance;
 
-
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Teleport")
+	float FadeCoefficient;
 
 public:
 	// Sets default values for this character's properties
@@ -143,12 +156,12 @@ protected:
 	void SetTelState(ETeleportState NewState);
 
 	/** Fires a projectile. */
-	void OnTeleport(FVector TeleportPosition);
+	void OnTeleport();
 
 	/** called to update teleport visual aid */
 	void UpdateTeleportCursor();
 
-	bool CheckValidTeleportLocation(FHitResult& HitResult);
+	bool CheckValidTeleportLocation();
 
 	/** Perform fade in/out */
 	bool DoScreenFade(bool FadeOut);
@@ -174,8 +187,8 @@ protected:
 public:	
 	
 	/** Returns Mesh1P subobject **/
-	FORCEINLINE class USkeletalMeshComponent* GetMesh1P() const { return Mesh1P; }
+	//FORCEINLINE class USkeletalMeshComponent* GetMesh1P() const { return Mesh1P; }
 	/** Returns FirstPersonCameraComponent subobject **/
-	FORCEINLINE class UCameraComponent* GetFirstPersonCameraComponent() const { return FirstPersonCameraComp; }
+	FORCEINLINE class UCameraComponent* GetFirstPersonCameraComponent() const { return CameraComp; }
 	
 };

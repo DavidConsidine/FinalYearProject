@@ -28,5 +28,13 @@ Standards In Player Movement In Virtual Reality Games
 	- Add Class to incorporate motion controller. (.cpp currently empty)
 	- Updated teleportation with visual cue and 2-step (aim, cancel or verify) implementation
 	- Created new Directory for Meshes.
-	- Created new level for testing (TestingGrounds_P)
+	- Created new level for testing (TestingGrounds_P) - ERROR: level file was never saved.
 	- Added Comments.
+
+## 06. Further work on Teleport locomotion including fade screen ##
+
+	- Create level for testing locomotion mechanics (TestingGround_P)
+	- Populated TestingGround_P with various geometry volumes of different sizes and colours.
+	- Create BP_TeleportCursor
+	- Update VRTeleportCursor.cpp so the cursor mesh no longer generates a shadow.
+	- Implemented Teleport with fade out/in, in VRCharacter.cpp

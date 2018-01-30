@@ -15,6 +15,7 @@ AVRTeleportCursor::AVRTeleportCursor()
 	CursorImpactMeshComp = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("CursorImpactMeshComp"));
 	CursorImpactMeshComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	CursorImpactMeshComp->SetVisibility(bVisible);
+	CursorImpactMeshComp->CastShadow = 0;
 	RootComponent = CursorImpactMeshComp;
 }
 
