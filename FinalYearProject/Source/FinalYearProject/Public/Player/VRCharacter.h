@@ -21,7 +21,7 @@ enum ETeleportState {
 
 /** States of active motion controllers */
 UENUM()
-enum EMControllerGestureActiveState {
+enum EMControllerGripActiveState {
 	Both = 0,
 	Left,
 	Right
@@ -49,25 +49,9 @@ protected:
 	UPROPERTY(VisibleDefaultsOnly, Category = "VR")
 	USceneComponent* VROrigin;
 
-	/** Pawn mesh: 1st person view (arms; seen only by self) */
-	UPROPERTY(VisibleDefaultsOnly, Category = Mesh)
-	USkeletalMeshComponent* Mesh1P;
-
 	/** First person camera */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 	UCameraComponent* CameraComp;
-
-	///** Motion controller (right hand) */	// AllowPrivateAccess: If true, properties defined in the C++ private scope will be accessible to blueprints
-	//UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
-	//UMotionControllerComponent* R_MotionController;
-
-	///** Motion controller (left hand) */
-	//UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
-	//UMotionControllerComponent* L_MotionController;
-
-	/** Teleport cursor */
-	/*UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
-	UVRTeleportCursorComponent* TeleportCursorComp;*/
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "TeleportCursor")
 	TSubclassOf<AVRTeleportCursor> TeleportCursorClass;
@@ -125,6 +109,22 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Teleport")
 	float FadeCoefficient;
 
+	/** Should Left Motion Controller motion be tracked to update player movement */
+	bool bIsLeftActive;
+
+	/** Should Right Motion Controller motion be tracked to update player movement */
+	bool bIsRightActive;
+
+	/* Exposed player movement speed variable */
+	UPROPERTY(EditAnywhere, Category = "MovementSpeed")
+	float GripMovementSpeed;
+
+	/** Stores Last captured controller position */
+	FVector PreviousLeftMControllerPos;
+
+	/** Stores Last captured controller position */
+	FVector PreviousRightMControllerPos;
+
 public:
 	// Sets default values for this character's properties
 	AVRCharacter();
@@ -165,6 +165,32 @@ protected:
 
 	/** Perform fade in/out */
 	bool DoScreenFade(bool FadeOut);
+
+	///////////////////////////////////////////
+
+	// gesture movement related funtions
+	////////////////////////////////////////////
+
+	void LeftGripPressed();
+
+	void LeftGripReleased();
+
+	void RightGripPressed();
+
+	void RightGripReleased();
+
+	void CheckVRGestureMovement();
+
+	/** Get Controller relative distance from root, since last update */
+	float GetControllerDistance(EMControllerGripActiveState ActiveState);
+
+	/** Get Controller direction vector */
+	FVector GetControllerDirection(EMControllerGripActiveState ActiveState);
+
+	/** Update Player movement by vector calculated from active Motion Controller(s) */
+	void AddPlayerMovement(FVector ControllerVector);
+
+	////////////////////////////////////////////
 
 	/** Handles moving forward/backward */
 	void MoveForward(float Val);

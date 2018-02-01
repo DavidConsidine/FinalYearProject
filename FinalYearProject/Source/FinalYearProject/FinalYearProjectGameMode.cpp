@@ -13,5 +13,5 @@ AFinalYearProjectGameMode::AFinalYearProjectGameMode()
 	DefaultPawnClass = PlayerPawnClassFinder.Class;
 
 	// use our custom HUD class
-	HUDClass = AFinalYearProjectHUD::StaticClass();
+	HUDClass = AFinalYearProjectHUD::StaticClass(); //uncomment to get crosshair HUD
 }

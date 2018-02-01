@@ -38,3 +38,12 @@ Standards In Player Movement In Virtual Reality Games
 	- Create BP_TeleportCursor
 	- Update VRTeleportCursor.cpp so the cursor mesh no longer generates a shadow.
 	- Implemented Teleport with fade out/in, in VRCharacter.cpp
+
+## 07. Incorporate Motion Controllers and HMD ##
+
+	- Fixed bug where calling AVRCharacter::StopTeleport while an invalid teleport location is currently selected didn't cancel the teleport and return the teleport state back to 'Wait'.
+	- Motion Controllers now appear in vr preview and transforms are tracked accurately.
+	- 'Arm Swinger' movement implemented using vive grip buttons as flag activators.
+	- implemented traditional gamepad style movement with motion controller. Mapped directional movement to the corresponding face buttons on the left hand motion controller.
+	- Set up teleport implementation using motion controller. If hmd is enabled, linetrace to determine teleport location will be calculated using the right motion controller instead of the player's camera.
+	- Stop HUD class from drawing crosshair.

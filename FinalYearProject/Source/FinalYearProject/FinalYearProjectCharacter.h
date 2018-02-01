@@ -174,10 +174,10 @@ protected:
 	void CheckVRGestureMovement();
 
 	/** Get Controller relative distance from root, since last update */
-	float GetControllerDistance(EMControllerGestureActiveState ActiveState);
+	float GetControllerDistance(EMControllerGripActiveState ActiveState);
 
 	/** Get Controller direction vector */
-	FVector GetControllerDirection(EMControllerGestureActiveState ActiveState);
+	FVector GetControllerDirection(EMControllerGripActiveState ActiveState);
 
 	/** Update Player movement by vector calculated from active Motion Controller(s) */
 	void AddPlayerMovement(FVector ControllerVector);

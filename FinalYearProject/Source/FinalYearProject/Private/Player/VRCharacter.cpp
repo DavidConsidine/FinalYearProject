@@ -8,6 +8,7 @@
 #include "ConstructorHelpers.h"
 #include "Blueprint/UserWidget.h"
 #include "Components/Image.h"
+#include "VRController.h"
 
 
 AVRCharacter::AVRCharacter()
@@ -20,9 +21,6 @@ AVRCharacter::AVRCharacter()
 	CameraComp->SetupAttachment(VROrigin);
 
 	//GetCapsuleComponent()->SetupAttachment(RootComponent);
-
-	Mesh1P = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("Mesh1P"));
-	Mesh1P->SetupAttachment(RootComponent);
 
 	// setting default values
 	BaseTurnRate = 45.0f;
@@ -40,6 +38,11 @@ AVRCharacter::AVRCharacter()
 
 	SetTelState(Wait);
 
+	bIsLeftActive = false;
+	bIsRightActive = false;
+
+	GripMovementSpeed = 1.0f;
+
 	// fade screen
 	ConstructorHelpers::FClassFinder<UUserWidget> WidgetHelper(TEXT("/Game/UI/WBP_FadeScreen"));
 	if (WidgetHelper.Succeeded())
@@ -53,7 +56,7 @@ void AVRCharacter::BeginPlay()
 	Super::BeginPlay();
 
 	FActorSpawnParameters SpawnParams;
-	SpawnParams.Owner = this;
+	//SpawnParams.Owner = this;
 	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 
 	// spawn teleport cursor
@@ -62,8 +65,48 @@ void AVRCharacter::BeginPlay()
 	if (UHeadMountedDisplayFunctionLibrary::IsHeadMountedDisplayEnabled())
 	{
 		// if anything needs to be done HMD related
-		RootComponent = VROrigin;
-		CameraComp->SetupAttachment(RootComponent);
+		//RootComponent = VROrigin;
+		SetRootComponent(VROrigin);
+		//GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		//CameraComp->AttachToComponent(RootComponent, );
+
+		// TODO: remove when testing standing up
+		/////////////////////////////////////////////////////////////////////////////////
+		UHeadMountedDisplayFunctionLibrary::SetTrackingOrigin(EHMDTrackingOrigin::Floor);
+		// set offset
+		//FVector RootOffset(0.0f, 0.0f, DefaultPlayerHeight);
+		//VROrigin->AddLocalOffset(RootOffset);
+		/////////////////////////////////////////////////////////////////////////////////
+
+		// spawn motion controllers and attach to VROrigin component
+		if (MotionControllerClass)
+		{
+			FAttachmentTransformRules TransformRules(EAttachmentRule::SnapToTarget, EAttachmentRule::SnapToTarget, EAttachmentRule::KeepWorld, false);
+			FTransform ControllerTransform;
+
+			// Left
+			VRController_L = GetWorld()->SpawnActor<AVRController>(MotionControllerClass, ControllerTransform, SpawnParams);
+			if (VRController_L)
+			{
+				VRController_L->SetHand(EControllerHand::Left);
+				VRController_L->AttachToComponent(RootComponent, TransformRules);
+
+				UE_LOG(LogTemp, Warning, TEXT("left controller spawned successful"));
+			}
+
+
+			// Right
+			VRController_R = GetWorld()->SpawnActor<AVRController>(MotionControllerClass, ControllerTransform, SpawnParams);
+			if (VRController_R)
+			{
+				VRController_R->SetHand(EControllerHand::Right);
+				VRController_R->AttachToComponent(RootComponent, TransformRules);
+				UE_LOG(LogTemp, Warning, TEXT("right controller spawned successful"));
+			}
+		}
+		
+		
+		UHeadMountedDisplayFunctionLibrary::ResetOrientationAndPosition();
 	}
 	else
 	{
@@ -82,10 +125,10 @@ void AVRCharacter::BeginPlay()
 		if (ScreenFadeWidget)
 		{
 			ScreenFadeWidget->AddToViewport();
-		}
-		
-		
+		}	
 	}
+
+
 }
 
 
@@ -135,6 +178,12 @@ void AVRCharacter::Tick(float DeltaTime)
 		}
 		break;
 	}
+
+	// check for gesture movement
+	if (bIsLeftActive || bIsRightActive)
+	{
+		CheckVRGestureMovement();
+	}
 }
 
 
@@ -151,11 +200,11 @@ void AVRCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 
 	
 	//// Bind VR Gesture Movement (Left Motion Controller) event
-	//PlayerInputComponent->BindAction("VR_GestureMovement_L", IE_Pressed, this, &AVRCharacter::SetIsActiveLeftMController);
-	//PlayerInputComponent->BindAction("VR_GestureMovement_L", IE_Released, this, &AVRCharacter::SetIsNotActiveLeftMController);
+	PlayerInputComponent->BindAction("VR_GestureMovement_L", IE_Pressed, this, &AVRCharacter::LeftGripPressed);
+	PlayerInputComponent->BindAction("VR_GestureMovement_L", IE_Released, this, &AVRCharacter::LeftGripReleased);
 	//// Bind VR Gesture Movement (Right Motion Controller) event
-	//PlayerInputComponent->BindAction("VR_GestureMovement_R", IE_Pressed, this, &AVRCharacter::SetIsActiveRightMController);
-	//PlayerInputComponent->BindAction("VR_GestureMovement_R", IE_Released, this, &AVRCharacter::SetIsNotActiveRightMController);
+	PlayerInputComponent->BindAction("VR_GestureMovement_R", IE_Pressed, this, &AVRCharacter::RightGripPressed);
+	PlayerInputComponent->BindAction("VR_GestureMovement_R", IE_Released, this, &AVRCharacter::RightGripReleased);
 
 	PlayerInputComponent->BindAction("ResetVR", IE_Pressed, this, &AVRCharacter::OnResetVR);
 
@@ -206,7 +255,7 @@ void AVRCharacter::StopTeleport()
 		}
 		SetTelState(FadeOut);
 	}
-	else if(bTeleporting && Aiming && bValidTeleportPosition)
+	else if(bTeleporting && Aiming && !bValidTeleportPosition)
 	{
 		CancelTeleport();
 
@@ -256,9 +305,19 @@ void AVRCharacter::OnTeleport()
 		TeleportCursor->SetVisible(false);
 	}
 
-	// offset location z value to avoid getting stuck in ground
-	TeleportPosition.Z += 50.0f;
-	SetActorLocation(TeleportPosition);
+	if (!UHeadMountedDisplayFunctionLibrary::IsHeadMountedDisplayEnabled())
+	{
+		// offset location z value to avoid getting stuck in ground
+		TeleportPosition.Z += 50.0f;
+		SetActorLocation(TeleportPosition);
+	}
+	else
+	{
+		SetActorLocation(TeleportPosition);
+		//UHeadMountedDisplayFunctionLibrary::ResetOrientationAndPosition();
+	}
+	
+	
 
 	SetTelState(FadeIn);
 }
@@ -277,11 +336,29 @@ bool AVRCharacter::CheckValidTeleportLocation()
 {
 	FHitResult Hit;
 	FCollisionQueryParams RV_TraceParams = FCollisionQueryParams(FName(TEXT("RV_Trace")), true, this);
-	FVector CamPos = CameraComp->GetComponentLocation();
-	FRotator CameraRot = CameraComp->GetComponentRotation();
-	FVector CamDir = CameraComp->GetForwardVector();
-	// TODO: Expose variable to the Editor
-	FVector End = CamPos + (CameraRot.Vector() * MaxTeleportDistance);
+
+	FVector StartPos;
+	FVector EndPos;
+
+	// if using hmd, then create the line trace using the motion controller.
+	// otherwise, use the player camera
+
+	if (UHeadMountedDisplayFunctionLibrary::IsHeadMountedDisplayEnabled())
+	{
+		StartPos = VRController_R->GetActorLocation();
+		FRotator ControllerRot = VRController_R->GetActorRotation();
+		//FVector ControllerDir = VRController_R->GetControllerForwardVector();
+		EndPos = StartPos + (ControllerRot.Vector() * MaxTeleportDistance);
+	}
+	else
+	{
+		StartPos = CameraComp->GetComponentLocation();
+		FRotator CameraRot = CameraComp->GetComponentRotation();
+		//FVector CamDir = CameraComp->GetForwardVector();
+		// TODO: Expose variable to the Editor
+		EndPos = StartPos + (CameraRot.Vector() * MaxTeleportDistance);
+	}
+	
 
 	RV_TraceParams.bTraceComplex = true;
 	RV_TraceParams.bTraceAsyncScene = true;
@@ -290,8 +367,8 @@ bool AVRCharacter::CheckValidTeleportLocation()
 	//  do the line trace
 	bool DidTrace = GetWorld()->LineTraceSingleByChannel(
 		Hit,        //result
-		CamPos,        //start
-		End,        //end
+		StartPos,        //start
+		EndPos,        //end
 		ECC_Pawn,    //collision channel
 		RV_TraceParams
 	);
@@ -350,11 +427,142 @@ bool AVRCharacter::DoScreenFade(bool FadeOut)
 	return false;
 }
 
+void AVRCharacter::LeftGripPressed()
+{
+	bIsLeftActive = true;
+}
+
+void AVRCharacter::LeftGripReleased()
+{
+	bIsLeftActive = false;
+}
+
+void AVRCharacter::RightGripPressed()
+{
+	bIsRightActive = true;
+}
+
+void AVRCharacter::RightGripReleased()
+{
+	bIsRightActive = false;
+}
+
+void AVRCharacter::CheckVRGestureMovement()
+{
+	float Distance;
+	FVector Direction;
+	if (bIsLeftActive && bIsRightActive)
+	{
+		// check movement distance of both controllers
+		Distance = GetControllerDistance(EMControllerGripActiveState::Both);
+		Direction = GetControllerDirection(EMControllerGripActiveState::Both);
+		AddPlayerMovement(Direction * (Distance * GripMovementSpeed));
+	}
+	else if (bIsLeftActive)
+	{
+		// check movement distance of left controller
+		Distance = GetControllerDistance(EMControllerGripActiveState::Left);
+		Direction = GetControllerDirection(EMControllerGripActiveState::Left);
+		AddPlayerMovement(Direction * (Distance * GripMovementSpeed));
+	}
+	else if (bIsRightActive)
+	{
+		// check movement distance of right controller
+		Distance = GetControllerDistance(EMControllerGripActiveState::Right);
+		Direction = GetControllerDirection(EMControllerGripActiveState::Right);
+		AddPlayerMovement(Direction * (Distance * GripMovementSpeed));
+	}
+
+	// update controller relative positions
+	PreviousLeftMControllerPos = VRController_L->GetControllerRelativeLocation();
+	PreviousRightMControllerPos = VRController_R->GetControllerRelativeLocation();
+}
+
+float AVRCharacter::GetControllerDistance(EMControllerGripActiveState ActiveState)
+{
+	// get distance motion controller(s) have moved since last check
+	switch (ActiveState)
+	{
+	case EMControllerGripActiveState::Both:
+	{
+		FVector DeltaPositionL;
+		FVector DeltaPositionR;
+
+		DeltaPositionL = VRController_L->GetControllerRelativeLocation() - PreviousLeftMControllerPos;
+		DeltaPositionR = VRController_R->GetControllerRelativeLocation() - PreviousRightMControllerPos;
+		return DeltaPositionL.Size() + DeltaPositionR.Size();
+	}
+	case EMControllerGripActiveState::Left:
+	{
+		FVector DeltaPosition;
+		DeltaPosition = VRController_L->GetControllerRelativeLocation() - PreviousLeftMControllerPos;
+		return DeltaPosition.Size();
+	}
+	case EMControllerGripActiveState::Right:
+	{
+		FVector DeltaPosition;
+		DeltaPosition = VRController_R->GetControllerRelativeLocation() - PreviousRightMControllerPos;
+		return DeltaPosition.Size();
+	}
+	default:
+		break;
+	}
+	return 0.0f;
+}
+
+FVector AVRCharacter::GetControllerDirection(EMControllerGripActiveState ActiveState)
+{
+	// get forward direction of active motion controller or the average direction between two active motion controllers
+	switch (ActiveState)
+	{
+	case EMControllerGripActiveState::Both:
+	{
+		FVector Direction;
+		FVector ForVecL;
+		FVector ForVecR;
+		ForVecL = VRController_L->GetControllerForwardVector();
+		ForVecR = VRController_R->GetControllerForwardVector();
+		Direction = (FVector(ForVecL.X, ForVecL.Y, 0.0f).GetSafeNormal() + FVector(ForVecR.X, ForVecR.Y, 0.0f).GetSafeNormal()) / 2.0f;
+		return Direction;
+	}
+	case EMControllerGripActiveState::Left:
+	{
+		FVector Direction;
+		FVector ForVec;
+		ForVec = VRController_L->GetControllerForwardVector();
+		Direction = FVector(ForVec.X, ForVec.Y, 0.0f).GetSafeNormal();
+		return Direction;
+	}
+	case EMControllerGripActiveState::Right:
+	{
+		FVector Direction;
+		FVector ForVec;
+		ForVec = VRController_R->GetControllerForwardVector();
+		Direction = FVector(ForVec.X, ForVec.Y, 0.0f).GetSafeNormal();
+		return Direction;
+	}
+	default:
+		break;
+	}
+	return FVector();
+}
+
+void AVRCharacter::AddPlayerMovement(FVector ControllerVector)
+{
+	// update player location
+	FVector ActorLoc = GetActorLocation();
+	SetActorLocation(ActorLoc + ControllerVector);
+}
+
 
 void AVRCharacter::MoveForward(float Val)
 {
-	GEngine->AddOnScreenDebugMessage(0, 0.5f, FColor::Yellow, "MoveForward", true);
-	if (Val != 0.0f)
+	if (UHeadMountedDisplayFunctionLibrary::IsHeadMountedDisplayEnabled() && Val != 0.0f)
+	{
+		// set up so forward is always where the camera is facing
+		AddMovementInput(CameraComp->GetForwardVector(), Val);
+	}
+	else if (!UHeadMountedDisplayFunctionLibrary::IsHeadMountedDisplayEnabled() && Val != 0.0f)
 	{
 		// add movement in that direction
 		AddMovementInput(GetActorForwardVector(), Val);
@@ -364,8 +572,12 @@ void AVRCharacter::MoveForward(float Val)
 
 void AVRCharacter::MoveRight(float Val)
 {
-	GEngine->AddOnScreenDebugMessage(0, 0.5f, FColor::Yellow, "MoveRight", true);
-	if (Val != 0.0f)
+	if (UHeadMountedDisplayFunctionLibrary::IsHeadMountedDisplayEnabled() && Val != 0.0f)
+	{
+		// set up so forward is always where the camera is facing
+		AddMovementInput(CameraComp->GetRightVector(), Val * 0.5); // half speed going sideways as full speed is not natural, tweak later
+	}
+	else if (!UHeadMountedDisplayFunctionLibrary::IsHeadMountedDisplayEnabled() && Val != 0.0f)
 	{
 		// add movement in that direction
 		AddMovementInput(GetActorRightVector(), Val);

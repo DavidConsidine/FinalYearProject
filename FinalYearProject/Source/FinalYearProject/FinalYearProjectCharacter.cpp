@@ -417,22 +417,22 @@ void AFinalYearProjectCharacter::CheckVRGestureMovement()
 	if (bIsActiveLeftMController && bIsActiveRightMController)
 	{
 		// check movement distance of both controllers
-		Distance = GetControllerDistance(EMControllerGestureActiveState::Both);
-		Direction = GetControllerDirection(EMControllerGestureActiveState::Both);
+		Distance = GetControllerDistance(EMControllerGripActiveState::Both);
+		Direction = GetControllerDirection(EMControllerGripActiveState::Both);
 		AddPlayerMovement(Direction * (Distance * MovementSpeed));
 	}
 	else if (bIsActiveLeftMController)
 	{
 		// check movement distance of left controller
-		Distance = GetControllerDistance(EMControllerGestureActiveState::Left);
-		Direction = GetControllerDirection(EMControllerGestureActiveState::Left);
+		Distance = GetControllerDistance(EMControllerGripActiveState::Left);
+		Direction = GetControllerDirection(EMControllerGripActiveState::Left);
 		AddPlayerMovement(Direction * (Distance * MovementSpeed));
 	}
 	else if (bIsActiveRightMController)
 	{
 		// check movement distance of right controller
-		Distance = GetControllerDistance(EMControllerGestureActiveState::Right);
-		Direction = GetControllerDirection(EMControllerGestureActiveState::Right);
+		Distance = GetControllerDistance(EMControllerGripActiveState::Right);
+		Direction = GetControllerDirection(EMControllerGripActiveState::Right);
 		AddPlayerMovement(Direction * (Distance * MovementSpeed));
 	}
 
@@ -441,12 +441,12 @@ void AFinalYearProjectCharacter::CheckVRGestureMovement()
 	PreviousRightMControllerPos = R_MotionController->GetRelativeTransform().GetLocation();
 }
 
-float AFinalYearProjectCharacter::GetControllerDistance(EMControllerGestureActiveState ActiveState)
+float AFinalYearProjectCharacter::GetControllerDistance(EMControllerGripActiveState ActiveState)
 {
 	// get distance motion controller(s) have moved since last check
 	switch(ActiveState)
 	{
-		case EMControllerGestureActiveState::Both:
+		case EMControllerGripActiveState::Both:
 		{
 			FVector DeltaPositionL;
 			FVector DeltaPositionR;
@@ -455,13 +455,13 @@ float AFinalYearProjectCharacter::GetControllerDistance(EMControllerGestureActiv
 			DeltaPositionR = R_MotionController->GetRelativeTransform().GetLocation() - PreviousRightMControllerPos;
 			return DeltaPositionL.Size() + DeltaPositionR.Size();
 		}
-		case EMControllerGestureActiveState::Left:
+		case EMControllerGripActiveState::Left:
 		{
 			FVector DeltaPosition;
 			DeltaPosition = L_MotionController->GetRelativeTransform().GetLocation() - PreviousLeftMControllerPos;
 			return DeltaPosition.Size();
 		}
-		case EMControllerGestureActiveState::Right:
+		case EMControllerGripActiveState::Right:
 		{
 			FVector DeltaPosition;
 			DeltaPosition = R_MotionController->GetRelativeTransform().GetLocation() - PreviousRightMControllerPos;
@@ -473,12 +473,12 @@ float AFinalYearProjectCharacter::GetControllerDistance(EMControllerGestureActiv
 	return 0.0f;
 }
 
-FVector AFinalYearProjectCharacter::GetControllerDirection(EMControllerGestureActiveState ActiveState)
+FVector AFinalYearProjectCharacter::GetControllerDirection(EMControllerGripActiveState ActiveState)
 {
 	// get forward direction of active motion controller or the average direction between two active motion controllers
 	switch (ActiveState)
 	{
-	case EMControllerGestureActiveState::Both:
+	case EMControllerGripActiveState::Both:
 	{
 		FVector Direction;
 		FVector ForVecL;
@@ -488,7 +488,7 @@ FVector AFinalYearProjectCharacter::GetControllerDirection(EMControllerGestureAc
 		Direction = (FVector(ForVecL.X, ForVecL.Y, 0.0f).GetSafeNormal() + FVector(ForVecR.X, ForVecR.Y, 0.0f).GetSafeNormal()) / 2.0f;
 		return Direction;
 	}
-	case EMControllerGestureActiveState::Left:
+	case EMControllerGripActiveState::Left:
 	{
 		FVector Direction;
 		FVector ForVec;
@@ -496,7 +496,7 @@ FVector AFinalYearProjectCharacter::GetControllerDirection(EMControllerGestureAc
 		Direction = FVector(ForVec.X, ForVec.Y, 0.0f).GetSafeNormal();
 		return Direction;
 	}
-	case EMControllerGestureActiveState::Right:
+	case EMControllerGripActiveState::Right:
 	{
 		FVector Direction;
 		FVector ForVec;

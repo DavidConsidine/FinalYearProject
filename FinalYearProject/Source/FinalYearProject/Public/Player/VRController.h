@@ -42,5 +42,8 @@ public:
 
 	void SetHand(EControllerHand Hand);
 	
-	
+	FVector GetControllerRelativeLocation();
+
+	FVector GetControllerForwardVector();
+
 };
