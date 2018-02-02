@@ -47,3 +47,7 @@ Standards In Player Movement In Virtual Reality Games
 	- implemented traditional gamepad style movement with motion controller. Mapped directional movement to the corresponding face buttons on the left hand motion controller.
 	- Set up teleport implementation using motion controller. If hmd is enabled, linetrace to determine teleport location will be calculated using the right motion controller instead of the player's camera.
 	- Stop HUD class from drawing crosshair.
+
+## 08. ShopFloor level blocked out ##
+
+	- Initial block out of ShopFloor_P level.
