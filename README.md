@@ -51,3 +51,9 @@ Standards In Player Movement In Virtual Reality Games
 ## 08. ShopFloor level blocked out ##
 
 	- Initial block out of ShopFloor_P level.
+
+## 09. Prototype Object interaction implemented ##
+
+	- BasePickup class created.
+	- BP class derived from base pickup
+	- Grabbing/dropping pickups with motion controllers implemented (via trigger inputs)

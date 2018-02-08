@@ -192,6 +192,16 @@ protected:
 
 	////////////////////////////////////////////
 
+	// Object interaction functions
+	////////////////////////////////////////
+
+	void GrabLeft();
+	void DropLeft();
+
+	void GrabRight();
+	void DropRight();
+	////////////////////////////////////////
+
 	/** Handles moving forward/backward */
 	void MoveForward(float Val);
 

@@ -206,6 +206,13 @@ void AVRCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 	PlayerInputComponent->BindAction("VR_GestureMovement_R", IE_Pressed, this, &AVRCharacter::RightGripPressed);
 	PlayerInputComponent->BindAction("VR_GestureMovement_R", IE_Released, this, &AVRCharacter::RightGripReleased);
 
+	// Bind controller grab/drop actions
+	PlayerInputComponent->BindAction("Grab_L", IE_Pressed, this, &AVRCharacter::GrabLeft);
+	PlayerInputComponent->BindAction("Grab_L", IE_Released, this, &AVRCharacter::DropLeft);
+	//// Bind VR Gesture Movement (Right Motion Controller) event
+	PlayerInputComponent->BindAction("Grab_R", IE_Pressed, this, &AVRCharacter::GrabRight);
+	PlayerInputComponent->BindAction("Grab_R", IE_Released, this, &AVRCharacter::DropRight);
+
 	PlayerInputComponent->BindAction("ResetVR", IE_Pressed, this, &AVRCharacter::OnResetVR);
 
 	// Bind movement events
@@ -552,6 +559,30 @@ void AVRCharacter::AddPlayerMovement(FVector ControllerVector)
 	// update player location
 	FVector ActorLoc = GetActorLocation();
 	SetActorLocation(ActorLoc + ControllerVector);
+}
+
+void AVRCharacter::GrabLeft()
+{
+	// left controller grab
+	VRController_L->GrabObject();
+}
+
+void AVRCharacter::DropLeft()
+{
+	// left controller drop
+	VRController_L->DropObject();
+}
+
+void AVRCharacter::GrabRight()
+{
+	// right controller grab
+	VRController_R->GrabObject();
+}
+
+void AVRCharacter::DropRight()
+{
+	// right controller drop
+	VRController_R->DropObject();
 }
 
 

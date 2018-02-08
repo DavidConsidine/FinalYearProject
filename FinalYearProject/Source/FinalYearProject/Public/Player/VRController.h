@@ -11,6 +11,8 @@
 // FORWARD DECLARATIONS
 class UMotionControllerComponent;
 class UStaticMeshComponent;
+class USphereComponent;
+class ABasePickup;
 
 UCLASS()
 class FINALYEARPROJECT_API AVRController : public AActor
@@ -25,15 +27,25 @@ public:
 
 protected:
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "MotionController")
+	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = "MotionController")
 	UMotionControllerComponent* MotionControllerComp;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "MotionController")
 	UStaticMeshComponent* MotionControllerMeshComp;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "SphereComponent")
+	USphereComponent* SphereComp;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "SphereComponent")
+	float SphereRadius;
+
+	ABasePickup* CurrentPickupObject;
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
+
+	ABasePickup* GetObjectNearestToHand();
 
 public:	
 	// Called every frame
@@ -45,5 +57,9 @@ public:
 	FVector GetControllerRelativeLocation();
 
 	FVector GetControllerForwardVector();
+
+	void GrabObject();
+
+	void DropObject();
 
 };
