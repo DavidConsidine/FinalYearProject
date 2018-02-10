@@ -170,6 +170,7 @@ void AVRCharacter::Tick(float DeltaTime)
 		{
 			SetTelState(Wait);
 			bTeleporting = false;
+
 			APlayerController* PC = GetWorld()->GetFirstPlayerController();
 			if (PC)
 			{
@@ -564,25 +565,45 @@ void AVRCharacter::AddPlayerMovement(FVector ControllerVector)
 void AVRCharacter::GrabLeft()
 {
 	// left controller grab
-	VRController_L->GrabObject();
+	
+	if (VRController_L->GetTeleporting())
+	{
+		VRController_L->SetGrabbing(true);
+		VRController_L->GrabObject();
+	}
 }
 
 void AVRCharacter::DropLeft()
 {
 	// left controller drop
-	VRController_L->DropObject();
+	
+	if (VRController_L->GetGrabbing())
+	{
+		VRController_L->SetGrabbing(false);
+		VRController_L->DropObject();
+	}
 }
 
 void AVRCharacter::GrabRight()
 {
 	// right controller grab
-	VRController_R->GrabObject();
+	
+	if (!VRController_R->GetGrabbing())
+	{
+		VRController_R->SetGrabbing(true);
+		VRController_R->GrabObject();
+	}
 }
 
 void AVRCharacter::DropRight()
 {
 	// right controller drop
 	VRController_R->DropObject();
+	if (VRController_R->GetGrabbing())
+	{
+		VRController_R->SetGrabbing(false);
+		VRController_R->DropObject();
+	}
 }
 
 

@@ -41,6 +41,13 @@ protected:
 
 	ABasePickup* CurrentPickupObject;
 
+	// flags to inform state of animation
+	UPROPERTY(BlueprintReadOnly, Category = "Animation State")
+	bool bTeleporting;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Animation State")
+	bool bGrabbing;
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -62,4 +69,13 @@ public:
 
 	void DropObject();
 
+	// setter functions for anim state
+	void SetTeleporting(bool Teleporting);
+
+	void SetGrabbing(bool Grabbing);
+
+	// getter functions for anim state
+	bool GetTeleporting();
+
+	bool GetGrabbing();
 };

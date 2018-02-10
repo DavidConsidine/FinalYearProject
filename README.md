@@ -57,3 +57,10 @@ Standards In Player Movement In Virtual Reality Games
 	- BasePickup class created.
 	- BP class derived from base pickup
 	- Grabbing/dropping pickups with motion controllers implemented (via trigger inputs)
+
+## 10. Import VR Hand Assets and Begin work on animation ##
+
+	- Import assets from 'Taiku Prototype VR Hands'
+	- Create Animation blueprint to handle VR hand animations.
+	- Implement state machine in animation blueprint, "Hand State". Containing states; Open (Idle), Point (for teleporting) and Fist (for grabbing objects).
+	- Add boolean flags to VRController class for adjusting animation states. (NOTE: refactor code so teleport flag for each controller can be updated independent of each other)

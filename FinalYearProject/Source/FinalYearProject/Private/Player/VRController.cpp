@@ -23,6 +23,10 @@ AVRController::AVRController()
 	// TODO: haptic feedback on collisions
 	/*SphereComp->OnComponentBeginOverlap.AddDynamic();
 	SphereComp->OnComponentEndOverlap.AddDynamic();*/
+
+	// default anim state flags
+	bTeleporting = false;
+	bGrabbing = false;
 }
 
 void AVRController::BeginPlay()
@@ -114,5 +118,25 @@ void AVRController::DropObject()
 		//CurrentPickupObject->SetGrabbed(false);
 		CurrentPickupObject = nullptr;
 	}
+}
+
+void AVRController::SetTeleporting(bool Teleporting)
+{
+	bTeleporting = Teleporting;
+}
+
+void AVRController::SetGrabbing(bool Grabbing)
+{
+	bGrabbing = Grabbing;
+}
+
+bool AVRController::GetTeleporting()
+{
+	return bTeleporting;
+}
+
+bool AVRController::GetGrabbing()
+{
+	return bGrabbing;
 }
 
