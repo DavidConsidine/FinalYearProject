@@ -3,16 +3,23 @@
 #include "Components/StaticMeshComponent.h"
 #include "Components/SphereComponent.h"
 #include "BasePickup.h"
+#include "VRTeleportCursor.h"
+
+// uncomment when switching static mesh comp for skeletal mesh comp
+//#include "Components/SkeletalMeshComponent.h"
 
 AVRController::AVRController()
 {
-	//PrimaryActorTick.bCanEverTick = true;
+	PrimaryActorTick.bCanEverTick = true;
 	
 	MotionControllerComp = CreateDefaultSubobject<UMotionControllerComponent>(TEXT("MotionControllerComp"));
 	RootComponent = MotionControllerComp;
 
 	MotionControllerMeshComp = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("MotionControllerMeshComp"));
+	//MotionControllerMeshComp = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("MotionControllerMeshComp"));
 	MotionControllerMeshComp->SetupAttachment(RootComponent);
+
+	
 
 	SphereComp = CreateDefaultSubobject<USphereComponent>(TEXT("SphereComp"));
 	SphereComp->SetupAttachment(RootComponent);
@@ -27,18 +34,36 @@ AVRController::AVRController()
 	// default anim state flags
 	bTeleporting = false;
 	bGrabbing = false;
+
+	MaxTeleportDistance = 1500.0f;
+
+	bValidTeleportPosition = false;
+
+	PreviousTeleportPosition = CurrentTeleportPosition = FVector::ZeroVector;
 }
 
 void AVRController::BeginPlay()
 {
 	Super::BeginPlay();
 	
+	// create instance of AVRTeleportCursor ///////
+	FActorSpawnParameters SpawnParams;
+	
+	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+	//// spawn teleport cursor
+	TeleportCursor = GetWorld()->SpawnActor<AVRTeleportCursor>(TeleportCursorClass, GetActorLocation(), GetActorRotation(), SpawnParams);
 }
 
 void AVRController::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+	if (bValidTeleportPosition)
+	{
+		// update teleport cursor
+		UpdateTeleportCursor();
+	}
+	
 
 }
 
@@ -138,5 +163,113 @@ bool AVRController::GetTeleporting()
 bool AVRController::GetGrabbing()
 {
 	return bGrabbing;
+}
+
+void AVRController::CheckValidTeleportLocation()
+{
+	FHitResult Hit;
+	FCollisionQueryParams RV_TraceParams = FCollisionQueryParams(FName(TEXT("RV_Trace")), true, this);
+
+	FVector StartPos;
+	FVector EndPos;
+
+	// if using hmd, then create the line trace using the motion controller.
+	// otherwise, use the player camera
+
+	StartPos = GetActorLocation();
+	FRotator ControllerRot = GetActorRotation();
+	//FVector ControllerDir = VRController_R->GetControllerForwardVector();
+	EndPos = StartPos + (ControllerRot.Vector() * MaxTeleportDistance);
+
+
+
+	RV_TraceParams.bTraceComplex = true;
+	RV_TraceParams.bTraceAsyncScene = true;
+	RV_TraceParams.bReturnPhysicalMaterial = true;
+
+	//  do the line trace
+	bool DidTrace = GetWorld()->LineTraceSingleByChannel(
+		Hit,        //result
+		StartPos,        //start
+		EndPos,        //end
+		ECC_Pawn,    //collision channel
+		RV_TraceParams
+	);
+
+	if (DidTrace)
+	{
+		PreviousTeleportPosition = CurrentTeleportPosition;
+		CurrentTeleportPosition = Hit.ImpactPoint;
+		if (!TeleportCursor->IsVisible())
+		{
+			TeleportCursor->SetVisible(true);
+		}
+	}
+	else
+	{
+		if (TeleportCursor->IsVisible())
+		{
+			TeleportCursor->SetVisible(false);
+		}
+		PreviousTeleportPosition = CurrentTeleportPosition = FVector::ZeroVector;
+	}
+
+	bValidTeleportPosition = DidTrace;
+}
+
+bool AVRController::StopTeleport()
+{
+	if (bValidTeleportPosition)
+	{
+		// if valid teleport location, move to that location
+		// TODO: when fading in / out, update this state change
+		APlayerController* PC = GetWorld()->GetFirstPlayerController();
+		if (PC)
+		{
+			DisableInput(PC);
+		}
+		return true;
+	}
+		
+	return false;
+}
+
+void AVRController::CancelTeleport()
+{
+	if (TeleportCursor->IsVisible())
+	{
+		TeleportCursor->SetVisible(false);
+	}
+}
+
+bool AVRController::OnTeleport(FVector& OutTeleportLocation)
+{
+	OutTeleportLocation = CurrentTeleportPosition;
+
+	if (OutTeleportLocation == FVector(0))
+	{
+
+		if (TeleportCursor->IsVisible())
+		{
+			TeleportCursor->SetVisible(false);
+		}
+		return false;
+	}
+
+	if (TeleportCursor->IsVisible())
+	{
+		TeleportCursor->SetVisible(false);
+	}
+
+	return true;
+}
+
+void AVRController::UpdateTeleportCursor()
+{
+	// update where the cursor is 
+	if (TeleportCursor && TeleportCursor->IsVisible())
+	{
+		TeleportCursor->UpdateCursor(CurrentTeleportPosition);
+	}
 }
 

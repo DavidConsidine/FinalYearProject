@@ -13,6 +13,9 @@ class UMotionControllerComponent;
 class UStaticMeshComponent;
 class USphereComponent;
 class ABasePickup;
+// uncomment when switching out the static mesh comp for the skeletal mesh comp
+//class USkeletalMeshComponent;
+class AVRTeleportCursor;
 
 UCLASS()
 class FINALYEARPROJECT_API AVRController : public AActor
@@ -27,11 +30,21 @@ public:
 
 protected:
 
+	// TeleportCursor related code. Uncomment when ready to move it
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "TeleportCursor")
+	TSubclassOf<AVRTeleportCursor> TeleportCursorClass;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	AVRTeleportCursor* TeleportCursor;
+
 	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = "MotionController")
 	UMotionControllerComponent* MotionControllerComp;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "MotionController")
 	UStaticMeshComponent* MotionControllerMeshComp;
+
+	//UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "MotionController")
+	//USkeletalMeshComponent* MotionControllerMeshComp;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "SphereComponent")
 	USphereComponent* SphereComp;
@@ -48,11 +61,24 @@ protected:
 	UPROPERTY(BlueprintReadOnly, Category = "Animation State")
 	bool bGrabbing;
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Teleport")
+	float MaxTeleportDistance;
+
+	/** Stores currently selected position to move player to */
+	FVector CurrentTeleportPosition;
+
+	/** Stores previously selected position to move player to */
+	FVector PreviousTeleportPosition;
+
+	bool bValidTeleportPosition;
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
 	ABasePickup* GetObjectNearestToHand();
+
+	void UpdateTeleportCursor();
 
 public:	
 	// Called every frame
@@ -78,4 +104,14 @@ public:
 	bool GetTeleporting();
 
 	bool GetGrabbing();
+
+	// teleport related code
+	void CheckValidTeleportLocation();
+
+	bool StopTeleport();
+
+	void CancelTeleport();
+
+	bool OnTeleport(FVector& OutTeleportLocation);
+	
 };

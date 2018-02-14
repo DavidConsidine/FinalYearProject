@@ -29,12 +29,12 @@ AVRCharacter::AVRCharacter()
 	DefaultPlayerHeight = 180.0f;
 
 	bTeleporting = false;
-	bValidTeleportPosition = false;
+	//bValidTeleportPosition = false;
 
-	MaxTeleportDistance = 1500.0f;
+	//MaxTeleportDistance = 1500.0f;
 	FadeCoefficient = 2.0f;
 
-	PreviousTeleportPosition = CurrentTeleportPosition = FVector::ZeroVector;
+	//PreviousTeleportPosition = CurrentTeleportPosition = FVector::ZeroVector;
 
 	SetTelState(Wait);
 
@@ -56,11 +56,11 @@ void AVRCharacter::BeginPlay()
 	Super::BeginPlay();
 
 	FActorSpawnParameters SpawnParams;
-	//SpawnParams.Owner = this;
+	////SpawnParams.Owner = this;
 	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 
-	// spawn teleport cursor
-	TeleportCursor = GetWorld()->SpawnActor<AVRTeleportCursor>(TeleportCursorClass, GetActorLocation(), GetActorRotation(), SpawnParams);
+	//// spawn teleport cursor
+	//TeleportCursor = GetWorld()->SpawnActor<AVRTeleportCursor>(TeleportCursorClass, GetActorLocation(), GetActorRotation(), SpawnParams);
 
 	if (UHeadMountedDisplayFunctionLibrary::IsHeadMountedDisplayEnabled())
 	{
@@ -146,12 +146,13 @@ void AVRCharacter::Tick(float DeltaTime)
 	case Aiming:
 		GEngine->AddOnScreenDebugMessage(0, 0.5f, FColor::Yellow, "TelState: Aiming", true);
 		//update linetrace and determine if valid location
-		bValidTeleportPosition = CheckValidTeleportLocation();
-		if (bValidTeleportPosition)
-		{
-			// update cursor
-			UpdateTeleportCursor();
-		}
+		//bValidTeleportPosition = 
+		CheckValidTeleportLocation();
+		//if (bValidTeleportPosition)
+		//{
+		//	// update cursor
+		//	UpdateTeleportCursor();
+		//}
 		break;
 	case FadeOut:
 		GEngine->AddOnScreenDebugMessage(0, 0.5f, FColor::Yellow, "TelState: FadeOut", true);
@@ -252,8 +253,10 @@ void AVRCharacter::StartTeleport()
 
 void AVRCharacter::StopTeleport()
 {
-	if (bTeleporting && Aiming && bValidTeleportPosition)
+	if (bTeleporting && Aiming)
 	{
+		// call AVRController::StopTeleport
+
 		// if valid teleport location, move to that location
 		// TODO: when fading in / out, update this state change
 		APlayerController* PC = GetWorld()->GetFirstPlayerController();
@@ -261,12 +264,17 @@ void AVRCharacter::StopTeleport()
 		{
 			DisableInput(PC);
 		}
-		SetTelState(FadeOut);
-	}
-	else if(bTeleporting && Aiming && !bValidTeleportPosition)
-	{
-		CancelTeleport();
-
+		// set to fade out if true value returned from motion controller
+		if (VRController_R != nullptr && VRController_R->StopTeleport())
+		{
+			SetTelState(FadeOut);
+		}
+		else
+		{
+			// call cancelTeleport if return value is false
+			CancelTeleport();
+		}
+		
 	}
 }
 
@@ -277,10 +285,11 @@ void AVRCharacter::CancelTeleport()
 		SetTelState(Wait);
 		bTeleporting = false;
 
-		if (TeleportCursor->IsVisible())
+		if (VRController_R != nullptr)
 		{
-			TeleportCursor->SetVisible(false);
+			VRController_R->CancelTeleport();
 		}
+		
 	}
 }
 
@@ -294,112 +303,144 @@ void AVRCharacter::SetTelState(ETeleportState NewState)
 
 void AVRCharacter::OnTeleport()
 {
-	FVector TeleportPosition = CurrentTeleportPosition;
+	FVector TeleportPosition;
 
-	if (TeleportPosition == FVector(0))
+	if (VRController_R != nullptr && !VRController_R->OnTeleport(TeleportPosition))
 	{
 		SetTelState(Wait);
-
-		if (TeleportCursor->IsVisible())
-		{
-			TeleportCursor->SetVisible(false);
-		}
-		return;
-
-	}
-
-	if (TeleportCursor->IsVisible())
-	{
-		TeleportCursor->SetVisible(false);
-	}
-
-	if (!UHeadMountedDisplayFunctionLibrary::IsHeadMountedDisplayEnabled())
-	{
-		// offset location z value to avoid getting stuck in ground
-		TeleportPosition.Z += 50.0f;
-		SetActorLocation(TeleportPosition);
 	}
 	else
 	{
-		SetActorLocation(TeleportPosition);
-		//UHeadMountedDisplayFunctionLibrary::ResetOrientationAndPosition();
-	}
-	
-	
+		if (!UHeadMountedDisplayFunctionLibrary::IsHeadMountedDisplayEnabled())
+		{
+			// offset location z value to avoid getting stuck in ground
+			TeleportPosition.Z += 50.0f;
+			SetActorLocation(TeleportPosition);
+		}
+		else
+		{
+			SetActorLocation(TeleportPosition);
+			//UHeadMountedDisplayFunctionLibrary::ResetOrientationAndPosition();
+		}
 
-	SetTelState(FadeIn);
+		SetTelState(FadeIn);
+	}
+
+	//if (TeleportPosition == FVector(0))
+	//{
+	//	SetTelState(Wait);
+
+	//	if (TeleportCursor->IsVisible())
+	//	{
+	//		TeleportCursor->SetVisible(false);
+	//	}
+	//	return;
+
+	//}
+
+	//if (TeleportCursor->IsVisible())
+	//{
+	//	TeleportCursor->SetVisible(false);
+	//}
+
+	//if (!UHeadMountedDisplayFunctionLibrary::IsHeadMountedDisplayEnabled())
+	//{
+	//	// offset location z value to avoid getting stuck in ground
+	//	TeleportPosition.Z += 50.0f;
+	//	SetActorLocation(TeleportPosition);
+	//}
+	//else
+	//{
+	//	SetActorLocation(TeleportPosition);
+	//	//UHeadMountedDisplayFunctionLibrary::ResetOrientationAndPosition();
+	//}
+	
+	//SetTelState(FadeIn);
 }
 
+// let motion controller handle updates to cursor
+//void AVRCharacter::UpdateTeleportCursor()
+//{
+//
+//
+	//// update where the cursor is 
+	//if (TeleportCursor && TeleportCursor->IsVisible())
+	//{
+	//	TeleportCursor->UpdateCursor(CurrentTeleportPosition);
+	//}
+//}
 
-void AVRCharacter::UpdateTeleportCursor()
-{
-	// update where the cursor is 
-	if (TeleportCursor && TeleportCursor->IsVisible())
-	{
-		TeleportCursor->UpdateCursor(CurrentTeleportPosition);
-	}
-}
 
+// TODO: change return type to void
 bool AVRCharacter::CheckValidTeleportLocation()
 {
-	FHitResult Hit;
-	FCollisionQueryParams RV_TraceParams = FCollisionQueryParams(FName(TEXT("RV_Trace")), true, this);
 
-	FVector StartPos;
-	FVector EndPos;
-
-	// if using hmd, then create the line trace using the motion controller.
-	// otherwise, use the player camera
-
-	if (UHeadMountedDisplayFunctionLibrary::IsHeadMountedDisplayEnabled())
+	// call AVRController::CheckValidTeleportLocation();
+	if (VRController_R != nullptr)
 	{
-		StartPos = VRController_R->GetActorLocation();
-		FRotator ControllerRot = VRController_R->GetActorRotation();
-		//FVector ControllerDir = VRController_R->GetControllerForwardVector();
-		EndPos = StartPos + (ControllerRot.Vector() * MaxTeleportDistance);
-	}
-	else
-	{
-		StartPos = CameraComp->GetComponentLocation();
-		FRotator CameraRot = CameraComp->GetComponentRotation();
-		//FVector CamDir = CameraComp->GetForwardVector();
-		// TODO: Expose variable to the Editor
-		EndPos = StartPos + (CameraRot.Vector() * MaxTeleportDistance);
+		VRController_R->CheckValidTeleportLocation();
 	}
 	
+	return false;
 
-	RV_TraceParams.bTraceComplex = true;
-	RV_TraceParams.bTraceAsyncScene = true;
-	RV_TraceParams.bReturnPhysicalMaterial = true;
+	//FHitResult Hit;
+	//FCollisionQueryParams RV_TraceParams = FCollisionQueryParams(FName(TEXT("RV_Trace")), true, this);
 
-	//  do the line trace
-	bool DidTrace = GetWorld()->LineTraceSingleByChannel(
-		Hit,        //result
-		StartPos,        //start
-		EndPos,        //end
-		ECC_Pawn,    //collision channel
-		RV_TraceParams
-	);
+	//FVector StartPos;
+	//FVector EndPos;
 
-	if (DidTrace)
-	{
-		PreviousTeleportPosition = CurrentTeleportPosition;
-		CurrentTeleportPosition = Hit.ImpactPoint;
-		if (!TeleportCursor->IsVisible())
-		{
-			TeleportCursor->SetVisible(true);
-		}
-	}
-	else
-	{
-		if (TeleportCursor->IsVisible())
-		{
-			TeleportCursor->SetVisible(false);
-		}
-		PreviousTeleportPosition = CurrentTeleportPosition = FVector::ZeroVector;
-	}
+	//// if using hmd, then create the line trace using the motion controller.
+	//// otherwise, use the player camera
 
-	return DidTrace;
+	//if (UHeadMountedDisplayFunctionLibrary::IsHeadMountedDisplayEnabled())
+	//{
+	//	StartPos = VRController_R->GetActorLocation();
+	//	FRotator ControllerRot = VRController_R->GetActorRotation();
+	//	//FVector ControllerDir = VRController_R->GetControllerForwardVector();
+	//	EndPos = StartPos + (ControllerRot.Vector() * MaxTeleportDistance);
+	//}
+	//else
+	//{
+	//	StartPos = CameraComp->GetComponentLocation();
+	//	FRotator CameraRot = CameraComp->GetComponentRotation();
+	//	//FVector CamDir = CameraComp->GetForwardVector();
+	//	// TODO: Expose variable to the Editor
+	//	EndPos = StartPos + (CameraRot.Vector() * MaxTeleportDistance);
+	//}
+	//
+
+	//RV_TraceParams.bTraceComplex = true;
+	//RV_TraceParams.bTraceAsyncScene = true;
+	//RV_TraceParams.bReturnPhysicalMaterial = true;
+
+	////  do the line trace
+	//bool DidTrace = GetWorld()->LineTraceSingleByChannel(
+	//	Hit,        //result
+	//	StartPos,        //start
+	//	EndPos,        //end
+	//	ECC_Pawn,    //collision channel
+	//	RV_TraceParams
+	//);
+
+	//if (DidTrace)
+	//{
+	//	PreviousTeleportPosition = CurrentTeleportPosition;
+	//	CurrentTeleportPosition = Hit.ImpactPoint;
+	//	if (!TeleportCursor->IsVisible())
+	//	{
+	//		TeleportCursor->SetVisible(true);
+	//	}
+	//}
+	//else
+	//{
+	//	if (TeleportCursor->IsVisible())
+	//	{
+	//		TeleportCursor->SetVisible(false);
+	//	}
+	//	PreviousTeleportPosition = CurrentTeleportPosition = FVector::ZeroVector;
+	//}
+
+	//return DidTrace;
 }
 
 

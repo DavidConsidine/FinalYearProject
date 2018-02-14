@@ -53,11 +53,11 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 	UCameraComponent* CameraComp;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "TeleportCursor")
+	/*UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "TeleportCursor")
 	TSubclassOf<AVRTeleportCursor> TeleportCursorClass;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
-	AVRTeleportCursor* TeleportCursor;
+	AVRTeleportCursor* TeleportCursor;*/
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "MotionController")
 	TSubclassOf<AVRController> MotionControllerClass;
@@ -93,18 +93,18 @@ protected:
 	/** Current Teleport state machine */
 	ETeleportState TelState;
 
-	/** Stores currently selected position to move player to */
-	FVector CurrentTeleportPosition;
+	///** Stores currently selected position to move player to */
+	//FVector CurrentTeleportPosition;
 
-	/** Stores previously selected position to move player to */
-	FVector PreviousTeleportPosition;
+	///** Stores previously selected position to move player to */
+	//FVector PreviousTeleportPosition;
 
 	bool bTeleporting;
 
-	bool bValidTeleportPosition;
+	//bool bValidTeleportPosition;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Teleport")
-	float MaxTeleportDistance;
+	/*UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Teleport")
+	float MaxTeleportDistance;*/
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Teleport")
 	float FadeCoefficient;
