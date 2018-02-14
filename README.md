@@ -1,6 +1,13 @@
 # FinalYearProject
 Standards In Player Movement In Virtual Reality Games
 
+## 12. Add VRGameMode class files and Timer for timed game mode ##
+	
+	- Create VRGameMode and blueprint child class BP_VRGameMode.
+	- Begin implementation of Timer for timed game modes.
+	- Replace BP_Blueprint in ShopFloor level with PlayerStart.
+	- Set GameMode to BP_VRGameMode.
+
 ## 11. Code refactoring and README reordering ##
 
 	- Reorder entries in README so newest entries appear at the top of the file.
