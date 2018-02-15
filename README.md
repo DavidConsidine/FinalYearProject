@@ -1,6 +1,19 @@
 # FinalYearProject
 Standards In Player Movement In Virtual Reality Games
 
+## 14. Update Teleportation Code ##
+
+	- Fix issue where cancelling teleport didn't stop the cursor from updating and blocked any further teleport input.
+	- Create Material, "M_Floor".
+	- Create Physics Material, "PM_Floor".
+	- Add Surface Type, "Floor", to project.
+	- Apply surface type, "Floor" to PM_Floor.
+	- Apply PM_Floor to M_Floor.
+	- Apply M_Floor to Floor geometry in ShopFloor_P.
+	- Update Line trace to check physical material's surface type on a successful hit.
+	- Floor Geometry is now the only valid Teleport surface.
+	- Remap Teleport input to right motion controller "face buttons".
+
 ## 13. Update Motion Controllers ##
 
 	- Update Motion Controllers to use VR Hand skeletal mesh.

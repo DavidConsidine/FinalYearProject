@@ -4,6 +4,7 @@
 #include "BasePickup.h"
 #include "VRTeleportCursor.h"
 #include "Components/SkeletalMeshComponent.h"
+#include "PhysicalMaterials/PhysicalMaterial.h"
 
 AVRController::AVRController()
 {
@@ -197,7 +198,8 @@ void AVRController::CheckValidTeleportLocation()
 		RV_TraceParams
 	);
 
-	if (DidTrace)
+	// check if trace was successful and that blocking object has a physical material with surface type set to "Floor"
+	if (DidTrace && Hit.PhysMaterial->SurfaceType == SurfaceType1) //SurfaceType1 == "Floor"
 	{
 		PreviousTeleportPosition = CurrentTeleportPosition;
 		CurrentTeleportPosition = Hit.ImpactPoint;
@@ -205,6 +207,7 @@ void AVRController::CheckValidTeleportLocation()
 		{
 			TeleportCursor->SetVisible(true);
 		}
+		bValidTeleportPosition = true;
 	}
 	else
 	{
@@ -213,27 +216,31 @@ void AVRController::CheckValidTeleportLocation()
 			TeleportCursor->SetVisible(false);
 		}
 		PreviousTeleportPosition = CurrentTeleportPosition = FVector::ZeroVector;
-	}
-
-	bValidTeleportPosition = DidTrace;
+		bValidTeleportPosition = false;
+	}	
 }
 
-bool AVRController::StopTeleport()
+bool AVRController::IsValidTeleportLocation()
 {
-	if (bValidTeleportPosition)
-	{
-		// if valid teleport location, move to that location
-		// TODO: when fading in / out, update this state change
-		APlayerController* PC = GetWorld()->GetFirstPlayerController();
-		if (PC)
-		{
-			DisableInput(PC);
-		}
-		return true;
-	}
-		
-	return false;
+	return bValidTeleportPosition;
 }
+
+//bool AVRController::StopTeleport()
+//{
+//	if (bValidTeleportPosition)
+//	{
+//		// if valid teleport location, move to that location
+//		// TODO: when fading in / out, update this state change
+//		APlayerController* PC = GetWorld()->GetFirstPlayerController();
+//		if (PC)
+//		{
+//			DisableInput(PC);
+//		}
+//		return true;
+//	}
+//		
+//	return false;
+//}
 
 void AVRController::CancelTeleport()
 {
@@ -241,11 +248,13 @@ void AVRController::CancelTeleport()
 	{
 		TeleportCursor->SetVisible(false);
 	}
+	bValidTeleportPosition = false;
 }
 
 bool AVRController::OnTeleport(FVector& OutTeleportLocation)
 {
 	OutTeleportLocation = CurrentTeleportPosition;
+	bValidTeleportPosition = false;
 
 	if (OutTeleportLocation == FVector(0))
 	{

@@ -96,7 +96,7 @@ protected:
 	///** Stores currently selected position to move player to */
 	//FVector CurrentTeleportPosition;
 
-	///** Stores previously selected position to move player to */
+	/** Stores previously selected position to move player to */
 	//FVector PreviousTeleportPosition;
 
 	bool bTeleporting;
@@ -172,7 +172,7 @@ protected:
 	/** called to update teleport visual aid */
 	void UpdateTeleportCursor();
 
-	bool CheckValidTeleportLocation();
+	void CheckValidTeleportLocation();
 
 	/** Perform fade in/out */
 	bool DoScreenFade(bool FadeOut);

@@ -173,7 +173,7 @@ void AVRCharacter::Tick(float DeltaTime)
 		if (DoScreenFade(false))
 		{
 			SetTelState(Wait);
-			bTeleporting = false;
+			//bTeleporting = false;
 			VRController_R->SetTeleporting(false);
 			APlayerController* PC = GetWorld()->GetFirstPlayerController();
 			if (PC)
@@ -258,9 +258,9 @@ void AVRCharacter::OnResetVR()
 
 void AVRCharacter::StartTeleport()
 {
-	if (!bTeleporting && TelState == Wait)
+	if (!VRController_R->GetTeleporting() && TelState == Wait)
 	{
-		bTeleporting = true;
+		//bTeleporting = true;
 		SetTelState(Aiming);
 		VRController_R->SetTeleporting(true);
 	}
@@ -269,7 +269,7 @@ void AVRCharacter::StartTeleport()
 
 void AVRCharacter::StopTeleport()
 {
-	if (bTeleporting && Aiming)
+	if (Aiming && VRController_R->GetTeleporting() && VRController_R->IsValidTeleportLocation())
 	{
 		// call AVRController::StopTeleport
 
@@ -281,25 +281,22 @@ void AVRCharacter::StopTeleport()
 			DisableInput(PC);
 		}
 		// set to fade out if true value returned from motion controller
-		if (VRController_R != nullptr && VRController_R->StopTeleport())
-		{
-			SetTelState(FadeOut);
-		}
-		else
-		{
-			// call cancelTeleport if return value is false
-			CancelTeleport();
-		}
-		
+		SetTelState(FadeOut);
+	}
+	else
+	{
+		//VRController_R->SetTeleporting(false);
+		UE_LOG(LogTemp, Warning, TEXT("VRCharacter::CancelTeleport"));
+		CancelTeleport();
 	}
 }
 
 void AVRCharacter::CancelTeleport()
 {
-	if (bTeleporting && TelState == Aiming)
+	if (VRController_R->GetTeleporting() && TelState == Aiming)
 	{
 		SetTelState(Wait);
-		bTeleporting = false;
+		//bTeleporting = false;
 
 		if (VRController_R != nullptr)
 		{
@@ -325,6 +322,7 @@ void AVRCharacter::OnTeleport()
 	if (VRController_R != nullptr && !VRController_R->OnTeleport(TeleportPosition))
 	{
 		SetTelState(Wait);
+		VRController_R->SetTeleporting(false);
 	}
 	else
 	{
@@ -389,7 +387,7 @@ void AVRCharacter::OnTeleport()
 
 
 // TODO: change return type to void
-bool AVRCharacter::CheckValidTeleportLocation()
+void AVRCharacter::CheckValidTeleportLocation()
 {
 
 	// call AVRController::CheckValidTeleportLocation();
@@ -398,7 +396,6 @@ bool AVRCharacter::CheckValidTeleportLocation()
 		VRController_R->CheckValidTeleportLocation();
 	}
 	
-	return false;
 
 	//FHitResult Hit;
 	//FCollisionQueryParams RV_TraceParams = FCollisionQueryParams(FName(TEXT("RV_Trace")), true, this);

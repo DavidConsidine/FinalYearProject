@@ -104,7 +104,9 @@ public:
 	// teleport related code
 	void CheckValidTeleportLocation();
 
-	bool StopTeleport();
+	bool IsValidTeleportLocation();
+
+	/*bool StopTeleport();*/
 
 	void CancelTeleport();
 
