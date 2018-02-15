@@ -23,7 +23,7 @@ class FINALYEARPROJECT_API IPickupInterface
 
 	// Add interface functions to this class. This is the class that will be inherited to implement this interface.
 public:
-	virtual void Grab(USceneComponent* AttachToComp) = 0;
+	virtual void Grab(USceneComponent* Parent, FName SocketName) = 0;
 	
 	virtual void Drop() = 0;
 };

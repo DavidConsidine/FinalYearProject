@@ -110,20 +110,31 @@ protected:
 	float FadeCoefficient;
 
 	/** Should Left Motion Controller motion be tracked to update player movement */
-	bool bIsLeftActive;
+	bool bIsLeftGripPressed;
 
 	/** Should Right Motion Controller motion be tracked to update player movement */
-	bool bIsRightActive;
+	bool bIsRightGripPressed;
 
 	/* Exposed player movement speed variable */
 	UPROPERTY(EditAnywhere, Category = "MovementSpeed")
 	float GripMovementSpeed;
+
+	/////////////////////////////////////////////////////////////
+	// store each controller's current/previous relative location
+	/////////////////////////////////////////////////////////////
+	/** Stores current controller position */
+	FVector CurrentLeftMControllerPos;
+
+	/** Stores current controller position */
+	FVector CurrentRightMControllerPos;
 
 	/** Stores Last captured controller position */
 	FVector PreviousLeftMControllerPos;
 
 	/** Stores Last captured controller position */
 	FVector PreviousRightMControllerPos;
+
+	////////////////////////////////////////////////////////////////
 
 public:
 	// Sets default values for this character's properties

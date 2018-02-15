@@ -1,25 +1,18 @@
 #include "VRController.h"
 #include "MotionControllerComponent.h"
-#include "Components/StaticMeshComponent.h"
 #include "Components/SphereComponent.h"
 #include "BasePickup.h"
 #include "VRTeleportCursor.h"
-
-// uncomment when switching static mesh comp for skeletal mesh comp
-//#include "Components/SkeletalMeshComponent.h"
+#include "Components/SkeletalMeshComponent.h"
 
 AVRController::AVRController()
 {
 	PrimaryActorTick.bCanEverTick = true;
-	
 	MotionControllerComp = CreateDefaultSubobject<UMotionControllerComponent>(TEXT("MotionControllerComp"));
 	RootComponent = MotionControllerComp;
 
-	MotionControllerMeshComp = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("MotionControllerMeshComp"));
-	//MotionControllerMeshComp = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("MotionControllerMeshComp"));
+	MotionControllerMeshComp = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("MotionControllerMeshComp"));
 	MotionControllerMeshComp->SetupAttachment(RootComponent);
-
-	
 
 	SphereComp = CreateDefaultSubobject<USphereComponent>(TEXT("SphereComp"));
 	SphereComp->SetupAttachment(RootComponent);
@@ -52,6 +45,8 @@ void AVRController::BeginPlay()
 	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 	//// spawn teleport cursor
 	TeleportCursor = GetWorld()->SpawnActor<AVRTeleportCursor>(TeleportCursorClass, GetActorLocation(), GetActorRotation(), SpawnParams);
+
+	
 }
 
 void AVRController::Tick(float DeltaTime)
@@ -81,7 +76,7 @@ ABasePickup* AVRController::GetObjectNearestToHand()
 
 	ABasePickup* NearestObject = nullptr;
 	
-	float MinDeltaDist = 1000.f; // arbitrary, large value
+	float MinDeltaDist = 1000.0f; // arbitrary, large value
 
 	
 	// find closest object to controller
@@ -113,6 +108,10 @@ ABasePickup* AVRController::GetObjectNearestToHand()
 void AVRController::SetHand(EControllerHand Hand)
 {
 	MotionControllerComp->Hand = Hand;
+	if (MotionControllerComp->Hand == EControllerHand::Right)
+	{
+		MotionControllerMeshComp->SetRelativeScale3D(FVector(1.0f, 1.0f, -1.0));
+	}
 }
 
 FVector AVRController::GetControllerRelativeLocation()
@@ -130,7 +129,7 @@ void AVRController::GrabObject()
 	CurrentPickupObject = GetObjectNearestToHand();
 	if (CurrentPickupObject != nullptr)
 	{
-		CurrentPickupObject->Grab(RootComponent);
+		CurrentPickupObject->Grab(MotionControllerMeshComp, "grab_pos");	// TODO: promote string here to a variable.
 		//CurrentPickupObject->SetGrabbed(true);
 	}
 }
@@ -176,7 +175,9 @@ void AVRController::CheckValidTeleportLocation()
 	// if using hmd, then create the line trace using the motion controller.
 	// otherwise, use the player camera
 
-	StartPos = GetActorLocation();
+	//StartPos = GetActorLocation();
+	//set start position to socket location on skeletal mesh
+	StartPos = MotionControllerMeshComp->GetSocketLocation("teleport_start_pos");
 	FRotator ControllerRot = GetActorRotation();
 	//FVector ControllerDir = VRController_R->GetControllerForwardVector();
 	EndPos = StartPos + (ControllerRot.Vector() * MaxTeleportDistance);

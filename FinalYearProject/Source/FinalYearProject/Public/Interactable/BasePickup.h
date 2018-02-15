@@ -25,7 +25,7 @@ public:
 
 	//////////////////////////////////////////////////////////
 	// Functions from IPickupInterface
-	virtual void Grab(USceneComponent* AttachToComp) override;
+	virtual void Grab(USceneComponent* Parent, FName SocketName) override;
 
 	virtual void Drop() override;
 	//////////////////////////////////////////////////////////

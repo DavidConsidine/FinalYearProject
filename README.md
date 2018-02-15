@@ -1,6 +1,17 @@
 # FinalYearProject
 Standards In Player Movement In Virtual Reality Games
 
+## 13. Update Motion Controllers ##
+
+	- Update Motion Controllers to use VR Hand skeletal mesh.
+	- Update teleportCursor linetrace; Now StartPos location is gotten from mesh socket, "teleport_start_pos".
+	- Fix Left Motion Controller Grab.
+	- Set editor start up level to ShopFloor_P.
+	- Fix socket location for grabbed objects.
+	- Readjust Meshes relative location in BP_VRController.
+	- Boolean flags in VRCharacter, storing whether controller grips are pressed, are renamed so names are more meaningful.
+	- Fix initial "velocity jump" when motion controller grip is pressed.
+
 ## 12. Add VRGameMode class files and Timer for timed game mode ##
 	
 	- Create VRGameMode and blueprint child class BP_VRGameMode.

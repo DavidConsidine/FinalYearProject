@@ -10,11 +10,9 @@
 ////////////////////////////////////////////
 // FORWARD DECLARATIONS
 class UMotionControllerComponent;
-class UStaticMeshComponent;
 class USphereComponent;
 class ABasePickup;
-// uncomment when switching out the static mesh comp for the skeletal mesh comp
-//class USkeletalMeshComponent;
+class USkeletalMeshComponent;
 class AVRTeleportCursor;
 
 UCLASS()
@@ -41,10 +39,7 @@ protected:
 	UMotionControllerComponent* MotionControllerComp;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "MotionController")
-	UStaticMeshComponent* MotionControllerMeshComp;
-
-	//UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "MotionController")
-	//USkeletalMeshComponent* MotionControllerMeshComp;
+	USkeletalMeshComponent* MotionControllerMeshComp;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "SphereComponent")
 	USphereComponent* SphereComp;
@@ -72,6 +67,8 @@ protected:
 
 	bool bValidTeleportPosition;
 
+	
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -83,7 +80,6 @@ protected:
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
-
 
 	void SetHand(EControllerHand Hand);
 	

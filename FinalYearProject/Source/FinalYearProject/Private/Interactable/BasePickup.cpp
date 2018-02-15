@@ -18,9 +18,9 @@ ABasePickup::ABasePickup()
 
 
 
-void ABasePickup::Grab(USceneComponent * AttachToComp)
+void ABasePickup::Grab(USceneComponent* Parent, FName SocketName)
 {
-	if (!AttachToComp)
+	if (!Parent)
 	{
 		return;
 	}
@@ -30,10 +30,10 @@ void ABasePickup::Grab(USceneComponent * AttachToComp)
 	MeshComp->SetSimulatePhysics(false);
 
 	// attach root component to passed in component (i.e attach object to controller)
-	FAttachmentTransformRules TransformRules(EAttachmentRule::KeepWorld, EAttachmentRule::KeepWorld, EAttachmentRule::KeepWorld, false);
-	RootComponent->AttachToComponent(AttachToComp, TransformRules);
+	FAttachmentTransformRules TransformRules(EAttachmentRule::SnapToTarget, EAttachmentRule::KeepWorld, EAttachmentRule::KeepWorld, false);
+	//RootComponent->AttachToComponent(AttachToComp, TransformRules);
 
-	
+	AttachToComponent(Parent, TransformRules, SocketName);
 
 }
 

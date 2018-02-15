@@ -38,8 +38,8 @@ AVRCharacter::AVRCharacter()
 
 	SetTelState(Wait);
 
-	bIsLeftActive = false;
-	bIsRightActive = false;
+	bIsLeftGripPressed = false;
+	bIsRightGripPressed = false;
 
 	GripMovementSpeed = 1.0f;
 
@@ -92,6 +92,8 @@ void AVRCharacter::BeginPlay()
 				VRController_L->AttachToComponent(RootComponent, TransformRules);
 
 				UE_LOG(LogTemp, Warning, TEXT("left controller spawned successful"));
+
+				PreviousLeftMControllerPos = CurrentLeftMControllerPos = VRController_L->GetControllerRelativeLocation();
 			}
 
 
@@ -102,6 +104,7 @@ void AVRCharacter::BeginPlay()
 				VRController_R->SetHand(EControllerHand::Right);
 				VRController_R->AttachToComponent(RootComponent, TransformRules);
 				UE_LOG(LogTemp, Warning, TEXT("right controller spawned successful"));
+				PreviousRightMControllerPos = CurrentRightMControllerPos = VRController_R->GetControllerRelativeLocation();
 			}
 		}
 		
@@ -171,7 +174,7 @@ void AVRCharacter::Tick(float DeltaTime)
 		{
 			SetTelState(Wait);
 			bTeleporting = false;
-
+			VRController_R->SetTeleporting(false);
 			APlayerController* PC = GetWorld()->GetFirstPlayerController();
 			if (PC)
 			{
@@ -181,8 +184,20 @@ void AVRCharacter::Tick(float DeltaTime)
 		break;
 	}
 
+	//update controllers relative positions
+	if (VRController_L != nullptr)
+	{
+		PreviousLeftMControllerPos = CurrentLeftMControllerPos;
+		CurrentLeftMControllerPos = VRController_L->GetControllerRelativeLocation();
+	}
+	if (VRController_R != nullptr)
+	{
+		PreviousRightMControllerPos = CurrentRightMControllerPos;
+		CurrentRightMControllerPos = VRController_R->GetControllerRelativeLocation();
+	}
+
 	// check for gesture movement
-	if (bIsLeftActive || bIsRightActive)
+	if (bIsLeftGripPressed || bIsRightGripPressed)
 	{
 		CheckVRGestureMovement();
 	}
@@ -247,6 +262,7 @@ void AVRCharacter::StartTeleport()
 	{
 		bTeleporting = true;
 		SetTelState(Aiming);
+		VRController_R->SetTeleporting(true);
 	}
 }
 
@@ -288,6 +304,7 @@ void AVRCharacter::CancelTeleport()
 		if (VRController_R != nullptr)
 		{
 			VRController_R->CancelTeleport();
+			VRController_R->SetTeleporting(false);
 		}
 		
 	}
@@ -478,43 +495,43 @@ bool AVRCharacter::DoScreenFade(bool FadeOut)
 
 void AVRCharacter::LeftGripPressed()
 {
-	bIsLeftActive = true;
+	bIsLeftGripPressed = true;
 }
 
 void AVRCharacter::LeftGripReleased()
 {
-	bIsLeftActive = false;
+	bIsLeftGripPressed = false;
 }
 
 void AVRCharacter::RightGripPressed()
 {
-	bIsRightActive = true;
+	bIsRightGripPressed = true;
 }
 
 void AVRCharacter::RightGripReleased()
 {
-	bIsRightActive = false;
+	bIsRightGripPressed = false;
 }
 
 void AVRCharacter::CheckVRGestureMovement()
 {
 	float Distance;
 	FVector Direction;
-	if (bIsLeftActive && bIsRightActive)
+	if (bIsLeftGripPressed && bIsRightGripPressed)
 	{
 		// check movement distance of both controllers
 		Distance = GetControllerDistance(EMControllerGripActiveState::Both);
 		Direction = GetControllerDirection(EMControllerGripActiveState::Both);
 		AddPlayerMovement(Direction * (Distance * GripMovementSpeed));
 	}
-	else if (bIsLeftActive)
+	else if (bIsLeftGripPressed)
 	{
 		// check movement distance of left controller
 		Distance = GetControllerDistance(EMControllerGripActiveState::Left);
 		Direction = GetControllerDirection(EMControllerGripActiveState::Left);
 		AddPlayerMovement(Direction * (Distance * GripMovementSpeed));
 	}
-	else if (bIsRightActive)
+	else if (bIsRightGripPressed)
 	{
 		// check movement distance of right controller
 		Distance = GetControllerDistance(EMControllerGripActiveState::Right);
@@ -537,20 +554,20 @@ float AVRCharacter::GetControllerDistance(EMControllerGripActiveState ActiveStat
 		FVector DeltaPositionL;
 		FVector DeltaPositionR;
 
-		DeltaPositionL = VRController_L->GetControllerRelativeLocation() - PreviousLeftMControllerPos;
-		DeltaPositionR = VRController_R->GetControllerRelativeLocation() - PreviousRightMControllerPos;
+		DeltaPositionL = CurrentLeftMControllerPos - PreviousLeftMControllerPos;
+		DeltaPositionR = CurrentRightMControllerPos - PreviousRightMControllerPos;
 		return DeltaPositionL.Size() + DeltaPositionR.Size();
 	}
 	case EMControllerGripActiveState::Left:
 	{
 		FVector DeltaPosition;
-		DeltaPosition = VRController_L->GetControllerRelativeLocation() - PreviousLeftMControllerPos;
+		DeltaPosition = CurrentLeftMControllerPos - PreviousLeftMControllerPos;
 		return DeltaPosition.Size();
 	}
 	case EMControllerGripActiveState::Right:
 	{
 		FVector DeltaPosition;
-		DeltaPosition = VRController_R->GetControllerRelativeLocation() - PreviousRightMControllerPos;
+		DeltaPosition = CurrentRightMControllerPos - PreviousRightMControllerPos;
 		return DeltaPosition.Size();
 	}
 	default:
@@ -606,8 +623,7 @@ void AVRCharacter::AddPlayerMovement(FVector ControllerVector)
 void AVRCharacter::GrabLeft()
 {
 	// left controller grab
-	
-	if (VRController_L->GetTeleporting())
+	if (!VRController_L->GetGrabbing())
 	{
 		VRController_L->SetGrabbing(true);
 		VRController_L->GrabObject();
