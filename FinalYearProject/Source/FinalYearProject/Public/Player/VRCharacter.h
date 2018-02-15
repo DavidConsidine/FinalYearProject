@@ -33,8 +33,6 @@ class USkeletalMeshComponent;
 class UInputComponent;
 class UCameraComponent;
 class UMotionControllerComponent;
-class UVRTeleportCursorComponent;
-class AVRTeleportCursor;
 class AVRController;
 class USceneComponent;
 class UUserWidget;
@@ -53,12 +51,6 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 	UCameraComponent* CameraComp;
 
-	/*UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "TeleportCursor")
-	TSubclassOf<AVRTeleportCursor> TeleportCursorClass;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
-	AVRTeleportCursor* TeleportCursor;*/
-
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "MotionController")
 	TSubclassOf<AVRController> MotionControllerClass;
 
@@ -72,9 +64,6 @@ protected:
 	TSubclassOf<UUserWidget> WidgetClass;
 
 	UUserWidget* ScreenFadeWidget;
-
-
-
 
 
 protected:
@@ -93,19 +82,6 @@ protected:
 	/** Current Teleport state machine */
 	ETeleportState TelState;
 
-	///** Stores currently selected position to move player to */
-	//FVector CurrentTeleportPosition;
-
-	/** Stores previously selected position to move player to */
-	//FVector PreviousTeleportPosition;
-
-	bool bTeleporting;
-
-	//bool bValidTeleportPosition;
-
-	/*UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Teleport")
-	float MaxTeleportDistance;*/
-
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Teleport")
 	float FadeCoefficient;
 
@@ -119,7 +95,6 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "MovementSpeed")
 	float GripMovementSpeed;
 
-	/////////////////////////////////////////////////////////////
 	// store each controller's current/previous relative location
 	/////////////////////////////////////////////////////////////
 	/** Stores current controller position */
@@ -168,9 +143,6 @@ protected:
 
 	/** Fires a projectile. */
 	void OnTeleport();
-
-	/** called to update teleport visual aid */
-	void UpdateTeleportCursor();
 
 	void CheckValidTeleportLocation();
 

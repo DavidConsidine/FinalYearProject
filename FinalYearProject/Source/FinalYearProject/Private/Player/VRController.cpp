@@ -46,8 +46,6 @@ void AVRController::BeginPlay()
 	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 	//// spawn teleport cursor
 	TeleportCursor = GetWorld()->SpawnActor<AVRTeleportCursor>(TeleportCursorClass, GetActorLocation(), GetActorRotation(), SpawnParams);
-
-	
 }
 
 void AVRController::Tick(float DeltaTime)
@@ -59,8 +57,6 @@ void AVRController::Tick(float DeltaTime)
 		// update teleport cursor
 		UpdateTeleportCursor();
 	}
-	
-
 }
 
 ABasePickup* AVRController::GetObjectNearestToHand()
@@ -79,7 +75,6 @@ ABasePickup* AVRController::GetObjectNearestToHand()
 	
 	float MinDeltaDist = 1000.0f; // arbitrary, large value
 
-	
 	// find closest object to controller
 	for(int i = 0; i < ListOfObjects.Num(); i++)
 	{
@@ -98,7 +93,6 @@ ABasePickup* AVRController::GetObjectNearestToHand()
 				NearestObject = TempPickup;
 			}
 		}
-		
 	}
 
 	return NearestObject;
@@ -168,26 +162,19 @@ bool AVRController::GetGrabbing()
 void AVRController::CheckValidTeleportLocation()
 {
 	FHitResult Hit;
+
 	FCollisionQueryParams RV_TraceParams = FCollisionQueryParams(FName(TEXT("RV_Trace")), true, this);
+	RV_TraceParams.bTraceComplex = true;
+	RV_TraceParams.bTraceAsyncScene = true;
+	RV_TraceParams.bReturnPhysicalMaterial = true;
 
 	FVector StartPos;
 	FVector EndPos;
 
-	// if using hmd, then create the line trace using the motion controller.
-	// otherwise, use the player camera
-
-	//StartPos = GetActorLocation();
 	//set start position to socket location on skeletal mesh
 	StartPos = MotionControllerMeshComp->GetSocketLocation("teleport_start_pos");
 	FRotator ControllerRot = GetActorRotation();
-	//FVector ControllerDir = VRController_R->GetControllerForwardVector();
 	EndPos = StartPos + (ControllerRot.Vector() * MaxTeleportDistance);
-
-
-
-	RV_TraceParams.bTraceComplex = true;
-	RV_TraceParams.bTraceAsyncScene = true;
-	RV_TraceParams.bReturnPhysicalMaterial = true;
 
 	//  do the line trace
 	bool DidTrace = GetWorld()->LineTraceSingleByChannel(
@@ -225,22 +212,6 @@ bool AVRController::IsValidTeleportLocation()
 	return bValidTeleportPosition;
 }
 
-//bool AVRController::StopTeleport()
-//{
-//	if (bValidTeleportPosition)
-//	{
-//		// if valid teleport location, move to that location
-//		// TODO: when fading in / out, update this state change
-//		APlayerController* PC = GetWorld()->GetFirstPlayerController();
-//		if (PC)
-//		{
-//			DisableInput(PC);
-//		}
-//		return true;
-//	}
-//		
-//	return false;
-//}
 
 void AVRController::CancelTeleport()
 {

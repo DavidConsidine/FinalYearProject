@@ -1,6 +1,10 @@
 # FinalYearProject
 Standards In Player Movement In Virtual Reality Games
 
+## 15. Clean up Code ##
+
+	- Remove unused, commented out code that has been refactored.
+
 ## 14. Update Teleportation Code ##
 
 	- Fix issue where cancelling teleport didn't stop the cursor from updating and blocked any further teleport input.

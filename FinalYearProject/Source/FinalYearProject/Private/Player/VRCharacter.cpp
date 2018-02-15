@@ -2,7 +2,6 @@
 #include "Camera/CameraComponent.h"
 #include "HeadMountedDisplayFunctionLibrary.h"
 #include "Engine/Engine.h"
-#include "VRTeleportCursor.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "ConstructorHelpers.h"
@@ -28,13 +27,7 @@ AVRCharacter::AVRCharacter()
 
 	DefaultPlayerHeight = 180.0f;
 
-	bTeleporting = false;
-	//bValidTeleportPosition = false;
-
-	//MaxTeleportDistance = 1500.0f;
 	FadeCoefficient = 2.0f;
-
-	//PreviousTeleportPosition = CurrentTeleportPosition = FVector::ZeroVector;
 
 	SetTelState(Wait);
 
@@ -56,11 +49,7 @@ void AVRCharacter::BeginPlay()
 	Super::BeginPlay();
 
 	FActorSpawnParameters SpawnParams;
-	////SpawnParams.Owner = this;
 	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-
-	//// spawn teleport cursor
-	//TeleportCursor = GetWorld()->SpawnActor<AVRTeleportCursor>(TeleportCursorClass, GetActorLocation(), GetActorRotation(), SpawnParams);
 
 	if (UHeadMountedDisplayFunctionLibrary::IsHeadMountedDisplayEnabled())
 	{
@@ -95,8 +84,6 @@ void AVRCharacter::BeginPlay()
 
 				PreviousLeftMControllerPos = CurrentLeftMControllerPos = VRController_L->GetControllerRelativeLocation();
 			}
-
-
 			// Right
 			VRController_R = GetWorld()->SpawnActor<AVRController>(MotionControllerClass, ControllerTransform, SpawnParams);
 			if (VRController_R)
@@ -118,28 +105,21 @@ void AVRCharacter::BeginPlay()
 		CameraComp->bUsePawnControlRotation = true;
 	}
 
-
 	// ui set up
 	if (WidgetClass)
 	{
 		ScreenFadeWidget = CreateWidget<UUserWidget>(GetWorld(), WidgetClass);
-		//FVector2D ScreenSize;
-		//GetWorld()->GetGameViewport()->GetViewportSize(ScreenSize);
 		if (ScreenFadeWidget)
 		{
 			ScreenFadeWidget->AddToViewport();
 		}	
 	}
-
-
 }
 
 
 void AVRCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
-	
 
 	switch (TelState)
 	{
@@ -148,14 +128,7 @@ void AVRCharacter::Tick(float DeltaTime)
 		break;
 	case Aiming:
 		GEngine->AddOnScreenDebugMessage(0, 0.5f, FColor::Yellow, "TelState: Aiming", true);
-		//update linetrace and determine if valid location
-		//bValidTeleportPosition = 
 		CheckValidTeleportLocation();
-		//if (bValidTeleportPosition)
-		//{
-		//	// update cursor
-		//	UpdateTeleportCursor();
-		//}
 		break;
 	case FadeOut:
 		GEngine->AddOnScreenDebugMessage(0, 0.5f, FColor::Yellow, "TelState: FadeOut", true);
@@ -173,7 +146,6 @@ void AVRCharacter::Tick(float DeltaTime)
 		if (DoScreenFade(false))
 		{
 			SetTelState(Wait);
-			//bTeleporting = false;
 			VRController_R->SetTeleporting(false);
 			APlayerController* PC = GetWorld()->GetFirstPlayerController();
 			if (PC)
@@ -209,13 +181,11 @@ void AVRCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 	// set up gameplay key bindings
 	check(PlayerInputComponent);
 
-
 	// Bind teleport events
 	PlayerInputComponent->BindAction("Teleport", IE_Pressed, this, &AVRCharacter::StartTeleport);
 	PlayerInputComponent->BindAction("Teleport", IE_Released, this, &AVRCharacter::StopTeleport);
 	PlayerInputComponent->BindAction("CancelTeleport", IE_Pressed, this, &AVRCharacter::CancelTeleport);
 
-	
 	//// Bind VR Gesture Movement (Left Motion Controller) event
 	PlayerInputComponent->BindAction("VR_GestureMovement_L", IE_Pressed, this, &AVRCharacter::LeftGripPressed);
 	PlayerInputComponent->BindAction("VR_GestureMovement_L", IE_Released, this, &AVRCharacter::LeftGripReleased);
@@ -260,7 +230,6 @@ void AVRCharacter::StartTeleport()
 {
 	if (!VRController_R->GetTeleporting() && TelState == Wait)
 	{
-		//bTeleporting = true;
 		SetTelState(Aiming);
 		VRController_R->SetTeleporting(true);
 	}
@@ -271,39 +240,27 @@ void AVRCharacter::StopTeleport()
 {
 	if (Aiming && VRController_R->GetTeleporting() && VRController_R->IsValidTeleportLocation())
 	{
-		// call AVRController::StopTeleport
-
-		// if valid teleport location, move to that location
-		// TODO: when fading in / out, update this state change
 		APlayerController* PC = GetWorld()->GetFirstPlayerController();
 		if (PC)
 		{
 			DisableInput(PC);
 		}
-		// set to fade out if true value returned from motion controller
 		SetTelState(FadeOut);
 	}
 	else
 	{
-		//VRController_R->SetTeleporting(false);
-		UE_LOG(LogTemp, Warning, TEXT("VRCharacter::CancelTeleport"));
 		CancelTeleport();
 	}
 }
 
 void AVRCharacter::CancelTeleport()
 {
-	if (VRController_R->GetTeleporting() && TelState == Aiming)
+	if (VRController_R != nullptr && VRController_R->GetTeleporting() && TelState == Aiming)
 	{
 		SetTelState(Wait);
-		//bTeleporting = false;
 
-		if (VRController_R != nullptr)
-		{
-			VRController_R->CancelTeleport();
-			VRController_R->SetTeleporting(false);
-		}
-		
+		VRController_R->CancelTeleport();
+		VRController_R->SetTeleporting(false);
 	}
 }
 
@@ -340,121 +297,14 @@ void AVRCharacter::OnTeleport()
 
 		SetTelState(FadeIn);
 	}
-
-	//if (TeleportPosition == FVector(0))
-	//{
-	//	SetTelState(Wait);
-
-	//	if (TeleportCursor->IsVisible())
-	//	{
-	//		TeleportCursor->SetVisible(false);
-	//	}
-	//	return;
-
-	//}
-
-	//if (TeleportCursor->IsVisible())
-	//{
-	//	TeleportCursor->SetVisible(false);
-	//}
-
-	//if (!UHeadMountedDisplayFunctionLibrary::IsHeadMountedDisplayEnabled())
-	//{
-	//	// offset location z value to avoid getting stuck in ground
-	//	TeleportPosition.Z += 50.0f;
-	//	SetActorLocation(TeleportPosition);
-	//}
-	//else
-	//{
-	//	SetActorLocation(TeleportPosition);
-	//	//UHeadMountedDisplayFunctionLibrary::ResetOrientationAndPosition();
-	//}
-	
-	//SetTelState(FadeIn);
 }
 
-// let motion controller handle updates to cursor
-//void AVRCharacter::UpdateTeleportCursor()
-//{
-//
-//
-	//// update where the cursor is 
-	//if (TeleportCursor && TeleportCursor->IsVisible())
-	//{
-	//	TeleportCursor->UpdateCursor(CurrentTeleportPosition);
-	//}
-//}
-
-
-// TODO: change return type to void
 void AVRCharacter::CheckValidTeleportLocation()
 {
-
-	// call AVRController::CheckValidTeleportLocation();
 	if (VRController_R != nullptr)
 	{
 		VRController_R->CheckValidTeleportLocation();
 	}
-	
-
-	//FHitResult Hit;
-	//FCollisionQueryParams RV_TraceParams = FCollisionQueryParams(FName(TEXT("RV_Trace")), true, this);
-
-	//FVector StartPos;
-	//FVector EndPos;
-
-	//// if using hmd, then create the line trace using the motion controller.
-	//// otherwise, use the player camera
-
-	//if (UHeadMountedDisplayFunctionLibrary::IsHeadMountedDisplayEnabled())
-	//{
-	//	StartPos = VRController_R->GetActorLocation();
-	//	FRotator ControllerRot = VRController_R->GetActorRotation();
-	//	//FVector ControllerDir = VRController_R->GetControllerForwardVector();
-	//	EndPos = StartPos + (ControllerRot.Vector() * MaxTeleportDistance);
-	//}
-	//else
-	//{
-	//	StartPos = CameraComp->GetComponentLocation();
-	//	FRotator CameraRot = CameraComp->GetComponentRotation();
-	//	//FVector CamDir = CameraComp->GetForwardVector();
-	//	// TODO: Expose variable to the Editor
-	//	EndPos = StartPos + (CameraRot.Vector() * MaxTeleportDistance);
-	//}
-	//
-
-	//RV_TraceParams.bTraceComplex = true;
-	//RV_TraceParams.bTraceAsyncScene = true;
-	//RV_TraceParams.bReturnPhysicalMaterial = true;
-
-	////  do the line trace
-	//bool DidTrace = GetWorld()->LineTraceSingleByChannel(
-	//	Hit,        //result
-	//	StartPos,        //start
-	//	EndPos,        //end
-	//	ECC_Pawn,    //collision channel
-	//	RV_TraceParams
-	//);
-
-	//if (DidTrace)
-	//{
-	//	PreviousTeleportPosition = CurrentTeleportPosition;
-	//	CurrentTeleportPosition = Hit.ImpactPoint;
-	//	if (!TeleportCursor->IsVisible())
-	//	{
-	//		TeleportCursor->SetVisible(true);
-	//	}
-	//}
-	//else
-	//{
-	//	if (TeleportCursor->IsVisible())
-	//	{
-	//		TeleportCursor->SetVisible(false);
-	//	}
-	//	PreviousTeleportPosition = CurrentTeleportPosition = FVector::ZeroVector;
-	//}
-
-	//return DidTrace;
 }
 
 
@@ -630,7 +480,6 @@ void AVRCharacter::GrabLeft()
 void AVRCharacter::DropLeft()
 {
 	// left controller drop
-	
 	if (VRController_L->GetGrabbing())
 	{
 		VRController_L->SetGrabbing(false);
@@ -641,7 +490,6 @@ void AVRCharacter::DropLeft()
 void AVRCharacter::GrabRight()
 {
 	// right controller grab
-	
 	if (!VRController_R->GetGrabbing())
 	{
 		VRController_R->SetGrabbing(true);
