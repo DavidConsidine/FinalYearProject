@@ -12,7 +12,7 @@ AVRGameMode::AVRGameMode()
 	UE_LOG(LogTemp, Warning, TEXT("AVRGameMode::AVRGameMode"))
 	TimePerRound = 120.0f;
 
-	CurrentGameMode = MenuSelect;
+	CurrentGameMode = FreeRoam;
 }
 
 EGameMode AVRGameMode::GetCurrentGameMode()
@@ -23,6 +23,17 @@ EGameMode AVRGameMode::GetCurrentGameMode()
 void AVRGameMode::SetCurrentGameMode(EGameMode NewGameMode)
 {
 	CurrentGameMode = NewGameMode;
+}
+
+int AVRGameMode::GetTimeRemaining()
+{
+	UWorld* World = GetWorld();
+	if (World && World->GetTimerManager().IsTimerActive(TimerHandle))
+	{
+		return World->GetTimerManager().GetTimerRemaining(TimerHandle);
+	}
+	
+	return -1;
 }
 
 void AVRGameMode::BeginPlay()

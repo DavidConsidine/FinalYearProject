@@ -47,5 +47,8 @@ public:
 	EGameMode GetCurrentGameMode();
 
 	void SetCurrentGameMode(EGameMode NewGameMode);
+
+	UFUNCTION(BlueprintCallable, Category = "Gameplay Timer")
+	int GetTimeRemaining();
 	
 };

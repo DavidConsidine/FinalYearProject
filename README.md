@@ -1,6 +1,12 @@
 # FinalYearProject #
 Standards In Player Movement In Virtual Reality Games
 
+## 17. Timer Display ##
+
+	- Create blueprint, BP_Display; for displaying text-based information in game, e.g. remaining time in round.
+	- Update textfield string with current remaining time for round.
+	- Implement blueprint callable function in VRGameMode to access remaining time from an active timer.
+
 ## 16. Menu System ##
 
 	- Create widget blueprint, WBP_ModeSelectMenu; Contains menu select UI.
