@@ -1,5 +1,13 @@
-# FinalYearProject
+# FinalYearProject #
 Standards In Player Movement In Virtual Reality Games
+
+## 16. Menu System ##
+
+	- Create widget blueprint, WBP_ModeSelectMenu; Contains menu select UI.
+	- Create Blueprint, BP_ModeSelectWidget; Actor storing widget component for menu select.
+	- Add enum, EGameMode, to VRGameMode.h for mode selection.
+	- Implement accessor and mutator functions in VRGameMode for EGameMode variable.
+	- Add implementation to VRCharacter to spawn Menu select widget on MenuSelect mode.
 
 ## 15. Clean up Code ##
 

@@ -6,16 +6,17 @@
 #include "GameFramework/GameModeBase.h"
 #include "VRGameMode.generated.h"
 
-/**
- * 
- */
 
+ // game modes
 UENUM()
 enum EGameMode
 {
-	MenuSelect,
-	Timed,
-	Endless
+	MenuSelect,	// Default starting mode, mode selection
+	FreeRoam,	// no time limit, free to move around the space, interact with objects
+	TimedLow,	// Timed mode, required items positioned on low level shelves
+	TimedMid,	// Timed mode, required items positioned on mid-level shelves
+	TimedHigh,	// Timed mode, required items positioned on high level shelves
+	TimedAll	// Timed mode, required items positioned on all level shelves
 };
 
 
@@ -31,14 +32,20 @@ protected:
 	float TimePerRound;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Game Mode Selection")
-	TEnumAsByte<EGameMode> GameModeSelected;
+	TEnumAsByte<EGameMode> CurrentGameMode;
 
 	FTimerHandle TimerHandle;
 
 	void EndTimedGame();
 
+	void PrepareGameMode();
+
 
 public:
 	AVRGameMode();
+
+	EGameMode GetCurrentGameMode();
+
+	void SetCurrentGameMode(EGameMode NewGameMode);
 	
 };

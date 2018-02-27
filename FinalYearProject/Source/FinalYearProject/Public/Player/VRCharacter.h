@@ -65,6 +65,12 @@ protected:
 
 	UUserWidget* ScreenFadeWidget;
 
+	// Mode Select widget
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "MenuWidget")
+	TSubclassOf<AActor> ModeSelectClass;
+
+	AActor* ModeSelectMenu;
+
 
 protected:
 
