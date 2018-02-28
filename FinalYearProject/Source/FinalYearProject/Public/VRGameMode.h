@@ -7,6 +7,8 @@
 #include "VRGameMode.generated.h"
 
 
+class AVRCharacter;
+
  // game modes
 UENUM()
 enum EGameMode
@@ -16,7 +18,8 @@ enum EGameMode
 	TimedLow,	// Timed mode, required items positioned on low level shelves
 	TimedMid,	// Timed mode, required items positioned on mid-level shelves
 	TimedHigh,	// Timed mode, required items positioned on high level shelves
-	TimedAll	// Timed mode, required items positioned on all level shelves
+	TimedAll,	// Timed mode, required items positioned on all level shelves
+	ModeReset	// Transitions between timed/free roam modes to menu select mode
 };
 
 
@@ -36,10 +39,18 @@ protected:
 
 	FTimerHandle TimerHandle;
 
+	AVRCharacter* PlayerChar;
+
+	FVector PlayerStartPos;
+
+	FRotator PlayerStartRot;
+
 	void EndTimedGame();
 
 	void PrepareGameMode();
 
+	/** Starts timer countdown for a timed round. returns true if timer successfully activated. Returns false otherwise*/
+	bool StartRoundTimer();
 
 public:
 	AVRGameMode();

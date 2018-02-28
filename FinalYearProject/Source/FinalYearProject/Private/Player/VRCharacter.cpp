@@ -45,6 +45,16 @@ AVRCharacter::AVRCharacter()
 	}
 }
 
+void AVRCharacter::SetCanMove(bool CanMove)
+{
+	bCanMove = CanMove;
+
+	// prevent teleporting
+	CancelTeleport();
+}
+
+
+
 void AVRCharacter::BeginPlay()
 {
 	Super::BeginPlay();
@@ -237,7 +247,7 @@ void AVRCharacter::Tick(float DeltaTime)
 	}
 
 	// check for gesture movement
-	if (bIsLeftGripPressed || bIsRightGripPressed)
+	if (bCanMove && (bIsLeftGripPressed || bIsRightGripPressed))
 	{
 		CheckVRGestureMovement();
 	}
@@ -579,31 +589,38 @@ void AVRCharacter::DropRight()
 
 void AVRCharacter::MoveForward(float Val)
 {
-	if (UHeadMountedDisplayFunctionLibrary::IsHeadMountedDisplayEnabled() && Val != 0.0f)
+	if (bCanMove)
 	{
-		// set up so forward is always where the camera is facing
-		AddMovementInput(CameraComp->GetForwardVector(), Val);
-	}
-	else if (!UHeadMountedDisplayFunctionLibrary::IsHeadMountedDisplayEnabled() && Val != 0.0f)
-	{
-		// add movement in that direction
-		AddMovementInput(GetActorForwardVector(), Val);
+		if (UHeadMountedDisplayFunctionLibrary::IsHeadMountedDisplayEnabled() && Val != 0.0f)
+		{
+			// set up so forward is always where the camera is facing
+			AddMovementInput(CameraComp->GetForwardVector(), Val);
+		}
+		else if (!UHeadMountedDisplayFunctionLibrary::IsHeadMountedDisplayEnabled() && Val != 0.0f)
+		{
+			// add movement in that direction
+			AddMovementInput(GetActorForwardVector(), Val);
+		}
 	}
 }
 
 
 void AVRCharacter::MoveRight(float Val)
 {
-	if (UHeadMountedDisplayFunctionLibrary::IsHeadMountedDisplayEnabled() && Val != 0.0f)
+	if (bCanMove)
 	{
-		// set up so forward is always where the camera is facing
-		AddMovementInput(CameraComp->GetRightVector(), Val * 0.5); // half speed going sideways as full speed is not natural, tweak later
+		if (UHeadMountedDisplayFunctionLibrary::IsHeadMountedDisplayEnabled() && Val != 0.0f)
+		{
+			// set up so forward is always where the camera is facing
+			AddMovementInput(CameraComp->GetRightVector(), Val * 0.5); // half speed going sideways as full speed is not natural, tweak later
+		}
+		else if (!UHeadMountedDisplayFunctionLibrary::IsHeadMountedDisplayEnabled() && Val != 0.0f)
+		{
+			// add movement in that direction
+			AddMovementInput(GetActorRightVector(), Val);
+		}
 	}
-	else if (!UHeadMountedDisplayFunctionLibrary::IsHeadMountedDisplayEnabled() && Val != 0.0f)
-	{
-		// add movement in that direction
-		AddMovementInput(GetActorRightVector(), Val);
-	}
+	
 }
 
 

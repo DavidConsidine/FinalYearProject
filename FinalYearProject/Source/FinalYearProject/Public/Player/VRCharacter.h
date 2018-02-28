@@ -85,6 +85,8 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera)
 	float BaseLookUpRate;
 
+	bool bCanMove;
+
 	/** Current Teleport state machine */
 	ETeleportState TelState;
 
@@ -120,6 +122,9 @@ protected:
 public:
 	// Sets default values for this character's properties
 	AVRCharacter();
+
+	void SetCanMove(bool CanMove);
+
 
 protected:
 	// Called when the game starts or when spawned

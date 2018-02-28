@@ -1,6 +1,13 @@
 # FinalYearProject #
 Standards In Player Movement In Virtual Reality Games
 
+## 18. Implementing game modes ##
+
+	- Introduce ModeReset to EGameMode.
+	- Implement timer to switch from a timed mode to mode reset in VRGameMode.
+	- Implement temporary camera fade for resetting player position. 
+	- Implement disabling and enabling player movement from game mode.
+
 ## 17. Timer Display ##
 
 	- Create blueprint, BP_Display; for displaying text-based information in game, e.g. remaining time in round.
