@@ -15,6 +15,8 @@ AVRGameMode::AVRGameMode()
 	UE_LOG(LogTemp, Warning, TEXT("AVRGameMode::AVRGameMode"))
 	TimePerRound = 120.0f;
 
+	FadeDelayTime = 1.0f;
+
 	CurrentGameMode = MenuSelect;
 }
 
@@ -33,9 +35,9 @@ void AVRGameMode::SetCurrentGameMode(EGameMode NewGameMode)
 int AVRGameMode::GetTimeRemaining()
 {
 	UWorld* World = GetWorld();
-	if (World && World->GetTimerManager().IsTimerActive(TimerHandle))
+	if (World && World->GetTimerManager().IsTimerActive(RoundTimerHandle))
 	{
-		return World->GetTimerManager().GetTimerRemaining(TimerHandle);
+		return World->GetTimerManager().GetTimerRemaining(RoundTimerHandle);
 	}
 	
 	return -1;
@@ -114,21 +116,14 @@ void AVRGameMode::PrepareGameMode()
 		UE_LOG(LogTemp, Warning, TEXT("ModeReset"));
 		// disable player movement
 		PlayerChar->SetCanMove(false);
-		Cast<APlayerController>(PlayerChar->GetController())->PlayerCameraManager->StartCameraFade(0.0, 1.0, 0.5f, FLinearColor::Black, false, false);
-		// if timer is active, disable it.
-		// fade player back to starting position
-		PlayerChar->SetActorLocation(PlayerStartPos);
-		PlayerChar->SetActorRotation(PlayerStartRot);
-		/*auto PC = GetWorld()->GetFirstPlayerController();
-		if (PC)
+		Cast<APlayerController>(PlayerChar->GetController())->PlayerCameraManager->StartCameraFade(0.0, 1.0, FadeDelayTime, FLinearColor::Black, false, true);
+
+		// set timer for delay during camera fade so reposition happens at max fade out.
+		UWorld* World = GetWorld();
+		if (World)
 		{
-			UE_LOG(LogTemp, Warning, TEXT("valid PC"));
-			RestartPlayerAtPlayerStart(PC, FindPlayerStart(PC, "DefaultPlayerStartPosition"));
-		}*/
-		// previous mode was score based, display score
-		// set to mode select mode
-		//recall prepare game mode
-		SetCurrentGameMode(MenuSelect);
+			World->GetTimerManager().SetTimer(FadeDelayTimerHandle, this, &AVRGameMode::RepositionPlayer, FadeDelayTime);
+		}
 		break;
 	}
 }
@@ -138,8 +133,21 @@ bool AVRGameMode::StartRoundTimer()
 	UWorld * World = GetWorld();
 	if (World)
 	{
-		World->GetTimerManager().SetTimer(TimerHandle, this, &AVRGameMode::EndTimedGame, TimePerRound);
+		World->GetTimerManager().SetTimer(RoundTimerHandle, this, &AVRGameMode::EndTimedGame, TimePerRound);
 		return true;
 	}
 	return false;
+}
+
+void AVRGameMode::RepositionPlayer()
+{
+	// fade player back to starting position
+	PlayerChar->SetActorLocation(PlayerStartPos);
+	PlayerChar->SetActorRotation(PlayerStartRot);
+
+	Cast<APlayerController>(PlayerChar->GetController())->PlayerCameraManager->StartCameraFade(1.0f, 0.0f, FadeDelayTime, FLinearColor::Black, false, true);
+	
+	// set to mode select mode
+	//recall prepare game mode
+	SetCurrentGameMode(FreeRoam);
 }

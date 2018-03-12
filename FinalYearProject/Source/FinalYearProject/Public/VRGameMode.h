@@ -34,10 +34,15 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Timer")
 	float TimePerRound;
 
+	UPROPERTY(EditDefaultsOnly, Category = "CameraFadeDelay")
+	float FadeDelayTime;
+
 	UPROPERTY(EditDefaultsOnly, Category = "Game Mode Selection")
 	TEnumAsByte<EGameMode> CurrentGameMode;
 
-	FTimerHandle TimerHandle;
+	FTimerHandle RoundTimerHandle;
+
+	FTimerHandle FadeDelayTimerHandle;
 
 	AVRCharacter* PlayerChar;
 
@@ -51,6 +56,8 @@ protected:
 
 	/** Starts timer countdown for a timed round. returns true if timer successfully activated. Returns false otherwise*/
 	bool StartRoundTimer();
+
+	void RepositionPlayer();
 
 public:
 	AVRGameMode();

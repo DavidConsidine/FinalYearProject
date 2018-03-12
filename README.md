@@ -1,6 +1,12 @@
 # FinalYearProject #
 Standards In Player Movement In Virtual Reality Games
 
+## 19. Finish Camera Fade Implementation on End of Round Timer ##
+
+	- Introduce fade delay timer.
+	- Finish camera fade implementation for round finished.
+	- Add socket, "menu_pos", to Skel_Hand_Skeleton.
+
 ## 18. Implementing game modes ##
 
 	- Introduce ModeReset to EGameMode.

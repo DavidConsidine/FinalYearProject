@@ -62,73 +62,6 @@ void AVRCharacter::BeginPlay()
 	FActorSpawnParameters SpawnParams;
 	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 
-	FTransform MenuTransform = GetTransform();
-	//FVector PlayerPos = GetActorLocation();
-	//MenuTransform.SetLocation(FVector(PlayerPos.X + 1000.f, PlayerPos.Y, PlayerPos.Z));
-
-	// check what game mode player is currently in (expected to be menuselect mode)
-	AVRGameMode* GameMode = Cast<AVRGameMode>(GetWorld()->GetAuthGameMode());
-	if (GameMode != nullptr) 
-	{
-		UE_LOG(LogTemp, Warning, TEXT("AVRCharacter::BeginPlay - VRGameMode valid"));
-		switch (GameMode->GetCurrentGameMode())
-		{
-		case MenuSelect:
-			// set up mode select widget
-			ModeSelectMenu = GetWorld()->SpawnActor<AActor>(ModeSelectClass, MenuTransform, SpawnParams);
-			if (ModeSelectMenu != nullptr)
-			{
-				UE_LOG(LogTemp, Warning, TEXT("AVRCharacter::BeginPlay - ModeSelectMenu valid"));
-
-				// rotate widget so it's visible to player camera
-				FRotator NewRot = ModeSelectMenu->GetActorRotation();
-				NewRot.Add(0.0f, 180.0f, 0.0f);
-				ModeSelectMenu->SetActorRotation(NewRot);
-
-				FVector WidgetLocation = ModeSelectMenu->GetActorLocation();
-				WidgetLocation += GetActorForwardVector().GetSafeNormal() * 1000.0f;
-				ModeSelectMenu->SetActorLocation(WidgetLocation);
-
-				FAttachmentTransformRules TransformRules(EAttachmentRule::KeepWorld, EAttachmentRule::KeepWorld, EAttachmentRule::KeepWorld, false);
-				
-				ModeSelectMenu->AttachToActor(this, TransformRules);
-				FVector NewPos = GetActorLocation();
-
-				// for testing, to display the menu in front of the player
-				FVector PlayerDirection = GetActorForwardVector();
-				PlayerDirection.Normalize();
-				NewPos = NewPos + (PlayerDirection * 100);
-				ModeSelectMenu->SetActorLocation(NewPos);
-				
-			}
-			UE_LOG(LogTemp, Warning, TEXT("AVRCharacter::BeginPlay - GameMode = menu select"));
-			break;
-		case FreeRoam:
-			UE_LOG(LogTemp, Warning, TEXT("AVRCharacter::BeginPlay - GameMode = free roam"));
-			break;
-		case TimedLow:
-			UE_LOG(LogTemp, Warning, TEXT("AVRCharacter::BeginPlay - GameMode = timed low"));
-			break;
-		case TimedMid:
-			UE_LOG(LogTemp, Warning, TEXT("AVRCharacter::BeginPlay - GameMode = timed mid"));
-			break;
-		case TimedHigh:
-			UE_LOG(LogTemp, Warning, TEXT("AVRCharacter::BeginPlay - GameMode = timed high"));
-			break;
-		case TimedAll:
-			UE_LOG(LogTemp, Warning, TEXT("AVRCharacter::BeginPlay - GameMode = timed all"));
-			break;
-		default:
-			break;
-		}
-	}
-	else
-	{
-		UE_LOG(LogTemp, Warning, TEXT("AVRCharacter::BeginPlay - VRGameMode not valid"));
-	}
-
-	
-
 	if (UHeadMountedDisplayFunctionLibrary::IsHeadMountedDisplayEnabled())
 	{
 		// if anything needs to be done HMD related
@@ -172,8 +105,8 @@ void AVRCharacter::BeginPlay()
 				PreviousRightMControllerPos = CurrentRightMControllerPos = VRController_R->GetControllerRelativeLocation();
 			}
 		}
-		
-		
+
+
 		UHeadMountedDisplayFunctionLibrary::ResetOrientationAndPosition();
 	}
 	else
@@ -182,6 +115,87 @@ void AVRCharacter::BeginPlay()
 		VROrigin->RelativeLocation = FVector(-39.56f, 1.75f, 64.f); // Position the camera
 		CameraComp->bUsePawnControlRotation = true;
 	}
+
+
+	FTransform MenuTransform = GetTransform();
+	//FVector PlayerPos = GetActorLocation();
+	//MenuTransform.SetLocation(FVector(PlayerPos.X + 1000.f, PlayerPos.Y, PlayerPos.Z));
+
+	// check what game mode player is currently in (expected to be menuselect mode)
+	AVRGameMode* GameMode = Cast<AVRGameMode>(GetWorld()->GetAuthGameMode());
+	if (GameMode != nullptr) 
+	{
+		UE_LOG(LogTemp, Warning, TEXT("AVRCharacter::BeginPlay - VRGameMode valid"));
+		switch (GameMode->GetCurrentGameMode())
+		{
+		case MenuSelect:
+			// set up mode select widget
+			ModeSelectMenu = GetWorld()->SpawnActor<AActor>(ModeSelectClass, MenuTransform, SpawnParams);
+			if (ModeSelectMenu != nullptr)
+			{
+				UE_LOG(LogTemp, Warning, TEXT("AVRCharacter::BeginPlay - ModeSelectMenu valid"));
+				FAttachmentTransformRules TransformRules(EAttachmentRule::SnapToTarget, EAttachmentRule::KeepWorld, EAttachmentRule::KeepWorld, false);
+				// add menu to left hand controller
+				if (VRController_L)
+				{
+
+					ModeSelectMenu->AttachToActor(VRController_L, TransformRules, "menu_pos");
+
+					// rotate widget so it's visible to player camera
+					FRotator NewRot = ModeSelectMenu->GetActorRotation();
+					NewRot.Add(90.0f, 180.0f, 90.0f);
+					ModeSelectMenu->SetActorRotation(NewRot);
+				}
+				else
+				{
+					// rotate widget so it's visible to player camera
+					FRotator NewRot = ModeSelectMenu->GetActorRotation();
+					NewRot.Add(0.0f, 180.0f, 0.0f);
+					ModeSelectMenu->SetActorRotation(NewRot);
+
+					FVector WidgetLocation = ModeSelectMenu->GetActorLocation();
+					WidgetLocation += GetActorForwardVector().GetSafeNormal() * 1000.0f;
+					ModeSelectMenu->SetActorLocation(WidgetLocation);
+
+					//FAttachmentTransformRules TransformRules(EAttachmentRule::KeepWorld, EAttachmentRule::KeepWorld, EAttachmentRule::KeepWorld, false);
+
+					ModeSelectMenu->AttachToActor(this, TransformRules);
+					FVector NewPos = GetActorLocation();
+
+					// for testing, to display the menu in front of the player
+					FVector PlayerDirection = GetActorForwardVector();
+					PlayerDirection.Normalize();
+					NewPos = NewPos + (PlayerDirection * 100);
+					ModeSelectMenu->SetActorLocation(NewPos);
+				}
+			}
+
+			UE_LOG(LogTemp, Warning, TEXT("AVRCharacter::BeginPlay - GameMode = menu select"));
+			break;
+		case FreeRoam:
+			UE_LOG(LogTemp, Warning, TEXT("AVRCharacter::BeginPlay - GameMode = free roam"));
+			break;
+		case TimedLow:
+			UE_LOG(LogTemp, Warning, TEXT("AVRCharacter::BeginPlay - GameMode = timed low"));
+			break;
+		case TimedMid:
+			UE_LOG(LogTemp, Warning, TEXT("AVRCharacter::BeginPlay - GameMode = timed mid"));
+			break;
+		case TimedHigh:
+			UE_LOG(LogTemp, Warning, TEXT("AVRCharacter::BeginPlay - GameMode = timed high"));
+			break;
+		case TimedAll:
+			UE_LOG(LogTemp, Warning, TEXT("AVRCharacter::BeginPlay - GameMode = timed all"));
+			break;
+		default:
+			break;
+		}
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("AVRCharacter::BeginPlay - VRGameMode not valid"));
+	}
+	
 
 	// ui set up
 	if (WidgetClass)
