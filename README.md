@@ -1,6 +1,11 @@
 # FinalYearProject #
 Standards In Player Movement In Virtual Reality Games
 
+## 20. UI Adjustments ##
+
+	- Create duplicate instances of BP_Display.
+	- Place BP_Displays across ShopFloor_P.
+
 ## 19. Finish Camera Fade Implementation on End of Round Timer ##
 
 	- Introduce fade delay timer.
