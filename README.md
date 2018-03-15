@@ -1,5 +1,11 @@
 # FinalYearProject #
-Standards In Player Movement In Virtual Reality Games
+Prescribed Virtual Reality: An examination of the potential of VR applications in healthcare.
+Game Title: Off The Shelf: On The Move 
+
+## 22. FYP Title Change ##
+
+	- Update Project name.
+	- Add game title.
 
 ## 21. Mode Select Interactions and Implementation ##
 
