@@ -9,6 +9,7 @@
 #include "Components/Image.h"
 #include "VRController.h"
 #include "VRGameMode.h"
+#include "Components/WidgetInteractionComponent.h"
 
 
 AVRCharacter::AVRCharacter()
@@ -43,6 +44,13 @@ AVRCharacter::AVRCharacter()
 	{
 		WidgetClass = WidgetHelper.Class;
 	}
+
+	WidgetInteractionComp = CreateDefaultSubobject<UWidgetInteractionComponent>(TEXT("WidgetInteractionComp"));
+	WidgetInteractionComp->Activate(false);
+	WidgetInteractionComp->InteractionDistance = 100.0f;
+	WidgetInteractionComp->PointerIndex = 1.0f;
+	WidgetInteractionComp->TraceChannel = ECollisionChannel::ECC_Visibility;
+	WidgetInteractionComp->VirtualUserIndex = 1;
 }
 
 void AVRCharacter::SetCanMove(bool CanMove)
@@ -51,6 +59,32 @@ void AVRCharacter::SetCanMove(bool CanMove)
 
 	// prevent teleporting
 	CancelTeleport();
+}
+
+void AVRCharacter::DisableMenuComponents()
+{
+	if (ModeSelectMenu != nullptr)
+	{
+		ModeSelectMenu->SetActorHiddenInGame(true);
+	}
+
+	if (WidgetInteractionComp != nullptr && WidgetInteractionComp->bIsActive)
+	{
+		WidgetInteractionComp->Activate(false);
+	}
+}
+
+void AVRCharacter::EnableMenuComponents()
+{
+	if (ModeSelectMenu != nullptr)
+	{
+		ModeSelectMenu->SetActorHiddenInGame(false);
+	}
+
+	if (WidgetInteractionComp != nullptr && WidgetInteractionComp->bIsActive)
+	{
+		WidgetInteractionComp->Activate(true);
+	}
 }
 
 
@@ -134,12 +168,12 @@ void AVRCharacter::BeginPlay()
 			if (ModeSelectMenu != nullptr)
 			{
 				UE_LOG(LogTemp, Warning, TEXT("AVRCharacter::BeginPlay - ModeSelectMenu valid"));
-				FAttachmentTransformRules TransformRules(EAttachmentRule::SnapToTarget, EAttachmentRule::KeepWorld, EAttachmentRule::KeepWorld, false);
+				FAttachmentTransformRules ModeSelectTransformRules(EAttachmentRule::SnapToTarget, EAttachmentRule::KeepWorld, EAttachmentRule::KeepWorld, false);
 				// add menu to left hand controller
 				if (VRController_L)
 				{
 
-					ModeSelectMenu->AttachToActor(VRController_L, TransformRules, "menu_pos");
+					ModeSelectMenu->AttachToComponent(VRController_L->GetSkeletalMeshComponent(), ModeSelectTransformRules, "menu_pos");
 
 					// rotate widget so it's visible to player camera
 					FRotator NewRot = ModeSelectMenu->GetActorRotation();
@@ -148,26 +182,41 @@ void AVRCharacter::BeginPlay()
 				}
 				else
 				{
+					// error with set up. comment out following else statement
 					// rotate widget so it's visible to player camera
-					FRotator NewRot = ModeSelectMenu->GetActorRotation();
-					NewRot.Add(0.0f, 180.0f, 0.0f);
-					ModeSelectMenu->SetActorRotation(NewRot);
+					//FRotator NewRot = ModeSelectMenu->GetActorRotation();
+					//NewRot.Add(0.0f, 180.0f, 0.0f);
+					//ModeSelectMenu->SetActorRotation(NewRot);
 
-					FVector WidgetLocation = ModeSelectMenu->GetActorLocation();
-					WidgetLocation += GetActorForwardVector().GetSafeNormal() * 1000.0f;
-					ModeSelectMenu->SetActorLocation(WidgetLocation);
+					//FVector WidgetLocation = ModeSelectMenu->GetActorLocation();
+					//WidgetLocation += GetActorForwardVector().GetSafeNormal() * 1000.0f;
+					//ModeSelectMenu->SetActorLocation(WidgetLocation);
 
-					//FAttachmentTransformRules TransformRules(EAttachmentRule::KeepWorld, EAttachmentRule::KeepWorld, EAttachmentRule::KeepWorld, false);
+					////FAttachmentTransformRules TransformRules(EAttachmentRule::KeepWorld, EAttachmentRule::KeepWorld, EAttachmentRule::KeepWorld, false);
 
-					ModeSelectMenu->AttachToActor(this, TransformRules);
-					FVector NewPos = GetActorLocation();
+					//ModeSelectMenu->AttachToActor(this, TransformRules);
+					//FVector NewPos = GetActorLocation();
 
-					// for testing, to display the menu in front of the player
-					FVector PlayerDirection = GetActorForwardVector();
-					PlayerDirection.Normalize();
-					NewPos = NewPos + (PlayerDirection * 100);
-					ModeSelectMenu->SetActorLocation(NewPos);
+					//// for testing, to display the menu in front of the player
+					//FVector PlayerDirection = GetActorForwardVector();
+					//PlayerDirection.Normalize();
+					//NewPos = NewPos + (PlayerDirection * 100);
+					//ModeSelectMenu->SetActorLocation(NewPos);
 				}
+				// set up widget interaction component on right controller
+				FAttachmentTransformRules WidgetInteractionCompTransformRules(EAttachmentRule::SnapToTarget, EAttachmentRule::KeepWorld, EAttachmentRule::KeepWorld, false);
+
+				if (VRController_R)
+				{
+					WidgetInteractionComp->AttachToComponent(VRController_R->GetSkeletalMeshComponent(), WidgetInteractionCompTransformRules, "menu_pointer_pos");
+					WidgetInteractionComp->Activate(true);
+					
+				}
+				else
+				{
+					UE_LOG(LogTemp, Warning, TEXT("AVRCharacter::BeginPlay - VRController_R not valid. WidgetInteractionComponent setup failed."));
+				}
+
 			}
 
 			UE_LOG(LogTemp, Warning, TEXT("AVRCharacter::BeginPlay - GameMode = menu select"));
@@ -292,6 +341,10 @@ void AVRCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 	PlayerInputComponent->BindAction("Grab_R", IE_Pressed, this, &AVRCharacter::GrabRight);
 	PlayerInputComponent->BindAction("Grab_R", IE_Released, this, &AVRCharacter::DropRight);
 
+	// bind right controller trigger for widget interactions
+	PlayerInputComponent->BindAction("Click", IE_Pressed, this, &AVRCharacter::Click);
+	PlayerInputComponent->BindAction("Click", IE_Released, this, &AVRCharacter::Release);
+
 	PlayerInputComponent->BindAction("ResetVR", IE_Pressed, this, &AVRCharacter::OnResetVR);
 
 	// Bind movement events
@@ -305,6 +358,34 @@ void AVRCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 	PlayerInputComponent->BindAxis("TurnRate", this, &AVRCharacter::TurnAtRate);
 	PlayerInputComponent->BindAxis("LookUp", this, &APawn::AddControllerPitchInput);
 	PlayerInputComponent->BindAxis("LookUpRate", this, &AVRCharacter::LookUpAtRate);
+}
+
+void AVRCharacter::Click()
+{
+	AVRGameMode* GameMode = Cast<AVRGameMode>(GetWorld()->GetAuthGameMode());
+	// check that mode select is current game mode
+	if (GameMode != nullptr && GameMode->GetCurrentGameMode() == MenuSelect)
+	{
+		// assuming interaction widget & R motion controller are valid 
+		if (WidgetInteractionComp)
+		{
+			WidgetInteractionComp->PressPointerKey(EKeys::LeftMouseButton);
+		}
+	}
+}
+
+void AVRCharacter::Release()
+{
+	AVRGameMode* GameMode = Cast<AVRGameMode>(GetWorld()->GetAuthGameMode());
+	// check that mode select is current game mode
+	if (GameMode != nullptr && GameMode->GetCurrentGameMode() == MenuSelect)
+	{
+		// assuming interaction widget & R motion controller are valid 
+		if (WidgetInteractionComp)
+		{
+			WidgetInteractionComp->ReleasePointerKey(EKeys::LeftMouseButton);
+		}
+	}
 }
 
 

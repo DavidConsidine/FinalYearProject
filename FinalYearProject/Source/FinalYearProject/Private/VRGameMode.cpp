@@ -78,9 +78,12 @@ void AVRGameMode::PrepareGameMode()
 	case MenuSelect:
 		// disable player movement
 		PlayerChar->SetCanMove(false);
+		PlayerChar->EnableMenuComponents();
 		
 		break;
 	case TimedLow:
+		//deactivate/hide menu components from vrcharacter
+		PlayerChar->DisableMenuComponents();
 		// initialise timer for round.
 		StartRoundTimer();
 		// generate list of required items (specifically low positioned items)
@@ -88,6 +91,8 @@ void AVRGameMode::PrepareGameMode()
 		PlayerChar->SetCanMove(true);
 		break;
 	case TimedMid:
+		//deactivate/hide menu components from vrcharacter
+		PlayerChar->DisableMenuComponents();
 		// initialise timer for round.
 		StartRoundTimer();
 		// generate list of required items (specifically mid positioned items)
@@ -95,6 +100,8 @@ void AVRGameMode::PrepareGameMode()
 		// enable player movement
 		break;
 	case TimedHigh:
+		//deactivate/hide menu components from vrcharacter
+		PlayerChar->DisableMenuComponents();
 		// initialise timer for round.
 		StartRoundTimer();
 		// generate list of required items (specifically high positioned items)
@@ -102,6 +109,8 @@ void AVRGameMode::PrepareGameMode()
 		PlayerChar->SetCanMove(true);
 		break;
 	case TimedAll:
+		//deactivate/hide menu components from vrcharacter
+		PlayerChar->DisableMenuComponents();
 		// initialise timer for round.
 		StartRoundTimer();
 		// generate list of required items (items in any position)
@@ -109,6 +118,8 @@ void AVRGameMode::PrepareGameMode()
 		PlayerChar->SetCanMove(true);
 		break;
 	case FreeRoam:
+		//deactivate/hide menu components from vrcharacter
+		PlayerChar->DisableMenuComponents();
 		// enable player movement
 		PlayerChar->SetCanMove(true);
 		break;
@@ -149,5 +160,5 @@ void AVRGameMode::RepositionPlayer()
 	
 	// set to mode select mode
 	//recall prepare game mode
-	SetCurrentGameMode(FreeRoam);
+	SetCurrentGameMode(MenuSelect);
 }

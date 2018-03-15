@@ -1,6 +1,14 @@
 # FinalYearProject #
 Standards In Player Movement In Virtual Reality Games
 
+## 21. Mode Select Interactions and Implementation ##
+
+	- Update Menu Select Menu Widget.
+	- Add UWidgetInteractionComponent to VRCharacter.
+	- Click events implemented using widgetinteractioncomponent and mode select widget.
+	- Menu select -> Timed Mode -> Mode Reset -> Menu Select implemented.
+	- Fix formatting of displayed time remaining.
+
 ## 20. UI Adjustments ##
 
 	- Create duplicate instances of BP_Display.

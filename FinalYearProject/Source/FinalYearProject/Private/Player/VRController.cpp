@@ -59,6 +59,16 @@ void AVRController::Tick(float DeltaTime)
 	}
 }
 
+USkeletalMeshComponent * AVRController::GetSkeletalMeshComponent()
+{
+	if (MotionControllerMeshComp)
+	{
+		return MotionControllerMeshComp;
+	}
+
+	return nullptr;
+}
+
 ABasePickup* AVRController::GetObjectNearestToHand()
 {
 	TArray<AActor*> ListOfObjects;

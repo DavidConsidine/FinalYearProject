@@ -79,6 +79,8 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
+	USkeletalMeshComponent* GetSkeletalMeshComponent();
+
 	void SetHand(EControllerHand Hand);
 	
 	FVector GetControllerRelativeLocation();

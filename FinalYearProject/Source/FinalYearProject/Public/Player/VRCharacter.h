@@ -36,6 +36,7 @@ class UMotionControllerComponent;
 class AVRController;
 class USceneComponent;
 class UUserWidget;
+class UWidgetInteractionComponent;
 
 UCLASS()
 class FINALYEARPROJECT_API AVRCharacter : public ACharacter
@@ -68,6 +69,10 @@ protected:
 	// Mode Select widget
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "MenuWidget")
 	TSubclassOf<AActor> ModeSelectClass;
+
+	// Widget Interaction component for mode select widget
+	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = "MenuWidget")
+	UWidgetInteractionComponent* WidgetInteractionComp;
 
 	AActor* ModeSelectMenu;
 
@@ -125,6 +130,10 @@ public:
 
 	void SetCanMove(bool CanMove);
 
+	void DisableMenuComponents();
+
+	void EnableMenuComponents();
+
 
 protected:
 	// Called when the game starts or when spawned
@@ -135,6 +144,10 @@ protected:
 
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
+
+	// interacting with menu widget
+	void Click();
+	void Release();
 
 	/** Resets HMD orientation and position in VR. */
 	void OnResetVR();

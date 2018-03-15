@@ -51,7 +51,5 @@ void AVRTeleportCursor::UpdateCursor(const FVector & ImpactLocation)
 	float x = NewLocation.X;
 	float y = NewLocation.Y;
 	float z = NewLocation.Z;
-
-	UE_LOG(LogTemp, Warning, TEXT("Impact Mesh location updated to : %.2f, %.2f, %.2f"), x, y, z);
 }
 
