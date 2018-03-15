@@ -2,6 +2,14 @@
 Prescribed Virtual Reality: An examination of the potential of VR applications in healthcare.
 Game Title: Off The Shelf: On The Move 
 
+## 23. Shopping Basket Creation ##
+
+	- Create Static mesh shopping basket from BSP geometry.
+	- Create Collision for shopping basket.
+	- Create VRShoppingBasket class.
+	- Add Static mesh component and box component (trigger volume).
+	- Create blueprint child of VRShoppingBasket, BP_VRShoppingBasket.
+
 ## 22. FYP Title Change ##
 
 	- Update Project name.
