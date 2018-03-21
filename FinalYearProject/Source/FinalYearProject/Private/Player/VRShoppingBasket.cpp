@@ -3,6 +3,8 @@
 #include "VRShoppingBasket.h"
 #include "Components/StaticMeshComponent.h"
 #include "Components/BoxComponent.h"
+#include "Interactable/BasePickup.h"
+#include "Kismet/GameplayStatics.h"
 
 
 // Sets default values
@@ -15,11 +17,15 @@ AVRShoppingBasket::AVRShoppingBasket()
 	RootComponent = StaticMeshComp;
 
 	BoxComp = CreateDefaultSubobject<UBoxComponent>(TEXT("BoxComp"));
+	BoxComp->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+	BoxComp->SetCollisionResponseToAllChannels(ECR_Ignore);
+	BoxComp->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
 	BoxComp->SetupAttachment(RootComponent);
 
 	// set up volume overlap events
 	BoxComp->OnComponentBeginOverlap.AddDynamic(this, &AVRShoppingBasket::OnOverlapBegin);
-	BoxComp->OnComponentEndOverlap.AddDynamic(this, &AVRShoppingBasket::OnOverlapEnd);
+
+	
 }
 
 // Called when the game starts or when spawned
@@ -32,12 +38,18 @@ void AVRShoppingBasket::BeginPlay()
 void AVRShoppingBasket::OnOverlapBegin(UPrimitiveComponent * OverlappedComp, AActor * OtherActor,
 	UPrimitiveComponent * OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult & SweepResult)
 {
+	ABasePickup* ShoppingItem = Cast<ABasePickup>(OtherActor);
+	if (ShoppingItem != nullptr)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Item added to basket"));
+		ShoppingItem->AddedToBasket();
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("no overlap with basepickup"));
+	}
 }
 
-void AVRShoppingBasket::OnOverlapEnd(UPrimitiveComponent * OverlappedComp, AActor * OtherActor,
-	UPrimitiveComponent * OtherComp, int32 OtherBodyIndex)
-{
-}
 
 // Called every frame
 void AVRShoppingBasket::Tick(float DeltaTime)

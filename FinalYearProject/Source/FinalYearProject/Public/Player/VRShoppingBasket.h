@@ -8,6 +8,7 @@
 
 class UStaticMeshComponent;
 class UBoxComponent;
+class UParticleSystem;
 
 UCLASS()
 class FINALYEARPROJECT_API AVRShoppingBasket : public AActor
@@ -23,11 +24,9 @@ protected:
 	virtual void BeginPlay() override;
 
 	// event when something enters trigger volume
+	UFUNCTION()
 	void OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor,
 		UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
-
-	void OnOverlapEnd(UPrimitiveComponent* OverlappedComp, AActor* OtherActor,
-		UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
 
 public:	
 	// Called every frame
@@ -39,4 +38,5 @@ protected:
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Shopping Basket")
 	UBoxComponent* BoxComp;
+
 };

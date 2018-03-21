@@ -2,6 +2,7 @@
 
 #include "BasePickup.h"
 #include "Components/StaticMeshComponent.h"
+#include "Kismet/GameplayStatics.h"
 
 // Sets default values
 ABasePickup::ABasePickup()
@@ -58,5 +59,25 @@ void ABasePickup::SetGrabbed(bool Grabbed)
 bool ABasePickup::IsGrabbed()
 {
 	return bGrabbed;
+}
+
+void ABasePickup::AddedToBasket()
+{
+	// set timer 
+	UWorld* World = GetWorld();
+	if (World)
+	{
+		World->GetTimerManager().SetTimer(TimerHandle, this, &ABasePickup::RemoveFromBasket, 1.5f);
+	}
+	
+}
+
+void ABasePickup::RemoveFromBasket()
+{
+	// spawn particle system
+	UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), ParticleFX, GetActorTransform());
+
+	// destroy object	- TODO: store reset location, disable object and move back to original position for mode reset.
+	Destroy();
 }
 

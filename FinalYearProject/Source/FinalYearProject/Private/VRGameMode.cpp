@@ -55,8 +55,11 @@ void AVRGameMode::BeginPlay()
 
 	PrepareGameMode();
 
-		
-	
+	// test shopping list generation
+	ItemList.Add("one");
+	ItemList.Add("two");
+	ItemList.Add("three");
+	OnItemListUpdated.Broadcast(ItemList);
 }
 
 void AVRGameMode::EndTimedGame()
@@ -89,6 +92,7 @@ void AVRGameMode::PrepareGameMode()
 		// generate list of required items (specifically low positioned items)
 		// enable player movement
 		PlayerChar->SetCanMove(true);
+		OnItemListUpdated.Broadcast(ItemList);
 		break;
 	case TimedMid:
 		//deactivate/hide menu components from vrcharacter
@@ -96,8 +100,9 @@ void AVRGameMode::PrepareGameMode()
 		// initialise timer for round.
 		StartRoundTimer();
 		// generate list of required items (specifically mid positioned items)
-		PlayerChar->SetCanMove(true);
 		// enable player movement
+		PlayerChar->SetCanMove(true);
+		OnItemListUpdated.Broadcast(ItemList);
 		break;
 	case TimedHigh:
 		//deactivate/hide menu components from vrcharacter
@@ -107,6 +112,7 @@ void AVRGameMode::PrepareGameMode()
 		// generate list of required items (specifically high positioned items)
 		// enable player movement
 		PlayerChar->SetCanMove(true);
+		OnItemListUpdated.Broadcast(ItemList);
 		break;
 	case TimedAll:
 		//deactivate/hide menu components from vrcharacter
@@ -116,6 +122,7 @@ void AVRGameMode::PrepareGameMode()
 		// generate list of required items (items in any position)
 		// enable player movement
 		PlayerChar->SetCanMove(true);
+		OnItemListUpdated.Broadcast(ItemList);
 		break;
 	case FreeRoam:
 		//deactivate/hide menu components from vrcharacter

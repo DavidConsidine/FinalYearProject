@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameFramework/Actor.h"
+#include "GameFramework/Pawn.h"
 #include "PickupInterface.h"
 
 #include "BasePickup.generated.h"
@@ -12,7 +12,7 @@ class USceneComponent;
 class UStaticMeshComponent;
 
 UCLASS()
-class FINALYEARPROJECT_API ABasePickup : public AActor, public IPickupInterface
+class FINALYEARPROJECT_API ABasePickup : public APawn, public IPickupInterface
 {
 	GENERATED_BODY()
 	
@@ -33,10 +33,19 @@ public:
 	void SetGrabbed(bool Grabbed);
 
 	bool IsGrabbed();
+
+	void AddedToBasket();
 	
 protected:
 	UPROPERTY(VisibleDefaultsOnly, Category = "Mesh Component")
 	UStaticMeshComponent* MeshComp;
 
+	UPROPERTY(EditDefaultsOnly, Category = "FX")
+	UParticleSystem* ParticleFX;
+
+	FTimerHandle TimerHandle;
+
 	bool bGrabbed;
+
+	void RemoveFromBasket();
 };

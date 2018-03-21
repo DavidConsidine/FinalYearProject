@@ -2,6 +2,13 @@
 Prescribed Virtual Reality: An examination of the potential of VR applications in healthcare.
 Game Title: Off The Shelf: On The Move 
 
+## 24. Shopping Item Interactions ##
+
+	- Overlap events implemented when pick up objects enter box collision of shopping basket.
+	- Create Particle System (PS_ShoppingItem).
+	- Add UParticleSystem to Base Pickup class.
+	- Create delegate in VRGameMode class to broadcast updated shopping item list.
+
 ## 23. Shopping Basket Creation ##
 
 	- Create Static mesh shopping basket from BSP geometry.
