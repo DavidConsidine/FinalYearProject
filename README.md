@@ -2,6 +2,10 @@
 Prescribed Virtual Reality: An examination of the potential of VR applications in healthcare.
 Game Title: Off The Shelf: On The Move 
 
+## 24. Shop list widget event binding ##
+
+	- Testing event binding for updated item list delegate.
+
 ## 24. Shopping Item Interactions ##
 
 	- Overlap events implemented when pick up objects enter box collision of shopping basket.

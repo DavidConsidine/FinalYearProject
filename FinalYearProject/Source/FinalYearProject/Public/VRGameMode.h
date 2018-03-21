@@ -33,6 +33,8 @@ class FINALYEARPROJECT_API AVRGameMode : public AGameModeBase
 protected:
 	virtual void BeginPlay() override;
 
+	virtual void Tick(float DeltaTime) override;
+
 	UPROPERTY(EditDefaultsOnly, Category = "Timer")
 	float TimePerRound;
 
@@ -79,7 +81,7 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Gameplay Timer")
 	int GetTimeRemaining();
 
-	UPROPERTY(BlueprintAssignable)
+	UPROPERTY(BlueprintAssignable, BlueprintCallable)
 	FShoppingListBroadcastDelegate OnItemListUpdated;
 	
 };

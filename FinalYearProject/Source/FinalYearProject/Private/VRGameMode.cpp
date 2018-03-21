@@ -53,13 +53,22 @@ void AVRGameMode::BeginPlay()
 	PlayerStartPos = PlayerChar->GetActorLocation();
 	PlayerStartRot = PlayerChar->GetActorRotation();
 
-	PrepareGameMode();
+	
 
 	// test shopping list generation
 	ItemList.Add("one");
 	ItemList.Add("two");
 	ItemList.Add("three");
-	OnItemListUpdated.Broadcast(ItemList);
+	//OnItemListUpdated.Broadcast(ItemList);
+
+	PrepareGameMode();
+}
+
+void AVRGameMode::Tick(float DeltaTime)
+{
+	Super::Tick(DeltaTime);
+
+	//OnItemListUpdated.Broadcast(ItemList);
 }
 
 void AVRGameMode::EndTimedGame()
@@ -82,7 +91,7 @@ void AVRGameMode::PrepareGameMode()
 		// disable player movement
 		PlayerChar->SetCanMove(false);
 		PlayerChar->EnableMenuComponents();
-		
+		//OnItemListUpdated.Broadcast(ItemList);
 		break;
 	case TimedLow:
 		//deactivate/hide menu components from vrcharacter
