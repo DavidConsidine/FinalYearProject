@@ -43,6 +43,18 @@ int AVRGameMode::GetTimeRemaining()
 	return -1;
 }
 
+void AVRGameMode::ItemCollected(FString ItemTag)
+{
+	if(ItemList.Contains(ItemTag))
+	{
+		ItemList.Remove(ItemTag);
+		// update score
+
+		// update ui list display
+		OnItemListUpdated.Broadcast(ItemList);
+	}
+}
+
 void AVRGameMode::BeginPlay()
 {
 	Super::BeginPlay();
@@ -52,14 +64,6 @@ void AVRGameMode::BeginPlay()
 	
 	PlayerStartPos = PlayerChar->GetActorLocation();
 	PlayerStartRot = PlayerChar->GetActorRotation();
-
-	
-
-	// test shopping list generation
-	ItemList.Add("one");
-	ItemList.Add("two");
-	ItemList.Add("three");
-	//OnItemListUpdated.Broadcast(ItemList);
 
 	PrepareGameMode();
 }
@@ -71,6 +75,26 @@ void AVRGameMode::Tick(float DeltaTime)
 	//OnItemListUpdated.Broadcast(ItemList);
 }
 
+// helper function to generate item list
+void AVRGameMode::GenerateItemList()
+{
+	switch (CurrentGameMode)
+	{
+	case TimedLow:
+		break;
+	case TimedMid:
+		break;
+	case TimedHigh:
+		break;
+	case TimedAll:
+		break;
+	}
+	ItemList.Add("Sphere");
+	ItemList.Add("Cube");
+	ItemList.Add("Pyramid");
+
+}
+
 void AVRGameMode::EndTimedGame()
 {
 	GEngine->AddOnScreenDebugMessage(0, 0.5f, FColor::Yellow, "Time's up", true);
@@ -78,6 +102,7 @@ void AVRGameMode::EndTimedGame()
 
 	// round finished, return to mode select
 	SetCurrentGameMode(ModeReset);
+	
 }
 
 // determines what needs to be done for each game mode
@@ -91,7 +116,6 @@ void AVRGameMode::PrepareGameMode()
 		// disable player movement
 		PlayerChar->SetCanMove(false);
 		PlayerChar->EnableMenuComponents();
-		//OnItemListUpdated.Broadcast(ItemList);
 		break;
 	case TimedLow:
 		//deactivate/hide menu components from vrcharacter
@@ -101,6 +125,7 @@ void AVRGameMode::PrepareGameMode()
 		// generate list of required items (specifically low positioned items)
 		// enable player movement
 		PlayerChar->SetCanMove(true);
+		GenerateItemList();
 		OnItemListUpdated.Broadcast(ItemList);
 		break;
 	case TimedMid:
@@ -111,6 +136,7 @@ void AVRGameMode::PrepareGameMode()
 		// generate list of required items (specifically mid positioned items)
 		// enable player movement
 		PlayerChar->SetCanMove(true);
+		GenerateItemList();
 		OnItemListUpdated.Broadcast(ItemList);
 		break;
 	case TimedHigh:
@@ -121,6 +147,7 @@ void AVRGameMode::PrepareGameMode()
 		// generate list of required items (specifically high positioned items)
 		// enable player movement
 		PlayerChar->SetCanMove(true);
+		GenerateItemList();
 		OnItemListUpdated.Broadcast(ItemList);
 		break;
 	case TimedAll:
@@ -131,6 +158,7 @@ void AVRGameMode::PrepareGameMode()
 		// generate list of required items (items in any position)
 		// enable player movement
 		PlayerChar->SetCanMove(true);
+		GenerateItemList();
 		OnItemListUpdated.Broadcast(ItemList);
 		break;
 	case FreeRoam:
@@ -144,7 +172,7 @@ void AVRGameMode::PrepareGameMode()
 		// disable player movement
 		PlayerChar->SetCanMove(false);
 		Cast<APlayerController>(PlayerChar->GetController())->PlayerCameraManager->StartCameraFade(0.0, 1.0, FadeDelayTime, FLinearColor::Black, false, true);
-
+		OnGameReset.Broadcast();
 		// set timer for delay during camera fade so reposition happens at max fade out.
 		UWorld* World = GetWorld();
 		if (World)

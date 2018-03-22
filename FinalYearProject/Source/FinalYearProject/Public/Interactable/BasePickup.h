@@ -43,9 +43,22 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "FX")
 	UParticleSystem* ParticleFX;
 
+	UPROPERTY(EditAnywhere, Category = "Item Tag")
+	FString ItemTag;
+
+	FTransform StartingTransform;
+
 	FTimerHandle TimerHandle;
 
 	bool bGrabbed;
 
 	void RemoveFromBasket();
+
+	virtual void BeginPlay() override;
+
+	UFUNCTION()
+	void ResetVisibilityAndPosition();
+
+	UFUNCTION()
+	void ActorOverlap(AActor* OverlappedActor, AActor* OtherActor);
 };

@@ -3,6 +3,7 @@
 #include "BasePickup.h"
 #include "Components/StaticMeshComponent.h"
 #include "Kismet/GameplayStatics.h"
+#include "VRGameMode.h"
 
 // Sets default values
 ABasePickup::ABasePickup()
@@ -10,7 +11,7 @@ ABasePickup::ABasePickup()
 	MeshComp = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("MeshComp"));
 	RootComponent = MeshComp;
 
-	//MeshComp->SetCollisionEnabled(ECollisionEnabled::PhysicsOnly);
+	MeshComp->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 
 	MeshComp->SetSimulatePhysics(true);
 
@@ -68,6 +69,12 @@ void ABasePickup::AddedToBasket()
 	if (World)
 	{
 		World->GetTimerManager().SetTimer(TimerHandle, this, &ABasePickup::RemoveFromBasket, 1.5f);
+
+		AVRGameMode* GM = Cast<AVRGameMode>(World->GetAuthGameMode());
+		if (GM != nullptr)
+		{
+			GM->ItemCollected(ItemTag);
+		}
 	}
 	
 }
@@ -77,7 +84,43 @@ void ABasePickup::RemoveFromBasket()
 	// spawn particle system
 	UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), ParticleFX, GetActorTransform());
 
-	// destroy object	- TODO: store reset location, disable object and move back to original position for mode reset.
-	Destroy();
+	// TODO: store reset location, disable object and move back to original position for mode reset.
+	SetActorHiddenInGame(true);
+	MeshComp->SetSimulatePhysics(false);
+	MeshComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+}
+
+void ABasePickup::BeginPlay()
+{
+	OnActorBeginOverlap.AddDynamic(this, &ABasePickup::ActorOverlap);
+	StartingTransform = GetActorTransform();
+
+	UWorld* World = GetWorld();
+	if (World)
+	{
+		AVRGameMode* GM = Cast<AVRGameMode>(World->GetAuthGameMode());
+		if (GM != nullptr)
+		{
+			GM->OnGameReset.AddDynamic(this, &ABasePickup::ResetVisibilityAndPosition);
+		}
+	}
+}
+
+void ABasePickup::ResetVisibilityAndPosition()
+{
+	MeshComp->SetAllPhysicsLinearVelocity(FVector::ZeroVector, false);
+	MeshComp->SetAllPhysicsAngularVelocity(FVector::ZeroVector, false);
+	SetActorTransform(StartingTransform);
+	if (bHidden)
+	{
+		SetActorHiddenInGame(false);
+		MeshComp->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+		MeshComp->SetSimulatePhysics(true);
+	}
+}
+
+void ABasePickup::ActorOverlap(AActor * OverlappedActor, AActor * OtherActor)
+{
+	UE_LOG(LogTemp, Warning, TEXT("Overlap pickup with %s"), *OtherActor->GetName());
 }
 

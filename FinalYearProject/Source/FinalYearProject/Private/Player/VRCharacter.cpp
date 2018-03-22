@@ -10,6 +10,7 @@
 #include "VRController.h"
 #include "VRGameMode.h"
 #include "Components/WidgetInteractionComponent.h"
+#include "VRShoppingBasket.h"
 
 
 AVRCharacter::AVRCharacter()
@@ -150,10 +151,8 @@ void AVRCharacter::BeginPlay()
 		CameraComp->bUsePawnControlRotation = true;
 	}
 
-
+	
 	FTransform MenuTransform = GetTransform();
-	//FVector PlayerPos = GetActorLocation();
-	//MenuTransform.SetLocation(FVector(PlayerPos.X + 1000.f, PlayerPos.Y, PlayerPos.Z));
 
 	// check what game mode player is currently in (expected to be menuselect mode)
 	AVRGameMode* GameMode = Cast<AVRGameMode>(GetWorld()->GetAuthGameMode());
@@ -184,24 +183,6 @@ void AVRCharacter::BeginPlay()
 				{
 					// error with set up. comment out following else statement
 					// rotate widget so it's visible to player camera
-					//FRotator NewRot = ModeSelectMenu->GetActorRotation();
-					//NewRot.Add(0.0f, 180.0f, 0.0f);
-					//ModeSelectMenu->SetActorRotation(NewRot);
-
-					//FVector WidgetLocation = ModeSelectMenu->GetActorLocation();
-					//WidgetLocation += GetActorForwardVector().GetSafeNormal() * 1000.0f;
-					//ModeSelectMenu->SetActorLocation(WidgetLocation);
-
-					////FAttachmentTransformRules TransformRules(EAttachmentRule::KeepWorld, EAttachmentRule::KeepWorld, EAttachmentRule::KeepWorld, false);
-
-					//ModeSelectMenu->AttachToActor(this, TransformRules);
-					//FVector NewPos = GetActorLocation();
-
-					//// for testing, to display the menu in front of the player
-					//FVector PlayerDirection = GetActorForwardVector();
-					//PlayerDirection.Normalize();
-					//NewPos = NewPos + (PlayerDirection * 100);
-					//ModeSelectMenu->SetActorLocation(NewPos);
 				}
 				// set up widget interaction component on right controller
 				FAttachmentTransformRules WidgetInteractionCompTransformRules(EAttachmentRule::SnapToTarget, EAttachmentRule::KeepWorld, EAttachmentRule::KeepWorld, false);
@@ -314,6 +295,7 @@ void AVRCharacter::Tick(float DeltaTime)
 	{
 		CheckVRGestureMovement();
 	}
+
 }
 
 
@@ -680,7 +662,6 @@ void AVRCharacter::DropRight()
 		VRController_R->DropObject();
 	}
 }
-
 
 void AVRCharacter::MoveForward(float Val)
 {

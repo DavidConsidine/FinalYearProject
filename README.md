@@ -2,6 +2,11 @@
 Prescribed Virtual Reality: An examination of the potential of VR applications in healthcare.
 Game Title: Off The Shelf: On The Move 
 
+## 26. BasePickup Reset Implementation ##
+
+	- Set up delegate in VRGameMode to broadcast when a game reset occurs.
+	- Add implementation to BasePickup class to reset it to its original state when a game reset event is fired.
+
 ## 25. Shop list widget event binding ##
 
 	- Further testing event binding for updated item list delegate.

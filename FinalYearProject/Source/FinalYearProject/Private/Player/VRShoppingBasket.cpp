@@ -21,10 +21,10 @@ AVRShoppingBasket::AVRShoppingBasket()
 	BoxComp->SetCollisionResponseToAllChannels(ECR_Ignore);
 	BoxComp->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
 	BoxComp->SetupAttachment(RootComponent);
-
-	// set up volume overlap events
 	BoxComp->OnComponentBeginOverlap.AddDynamic(this, &AVRShoppingBasket::OnOverlapBegin);
 
+	
+	UE_LOG(LogTemp, Warning, TEXT("ShoppingBasket constructor"));
 	
 }
 
@@ -32,12 +32,14 @@ AVRShoppingBasket::AVRShoppingBasket()
 void AVRShoppingBasket::BeginPlay()
 {
 	Super::BeginPlay();
+	// set up volume overlap events
 	
 }
 
 void AVRShoppingBasket::OnOverlapBegin(UPrimitiveComponent * OverlappedComp, AActor * OtherActor,
 	UPrimitiveComponent * OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult & SweepResult)
 {
+	UE_LOG(LogTemp, Warning, TEXT("OnOverlapBegin"));
 	ABasePickup* ShoppingItem = Cast<ABasePickup>(OtherActor);
 	if (ShoppingItem != nullptr)
 	{

@@ -25,6 +25,9 @@ enum EGameMode
 // delegate to broadcast shopping list to ui in game
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FShoppingListBroadcastDelegate, const TArray<FString>&, ItemList);
 
+// delegate to broadcast mode reset.
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FGameResetDelegate);
+
 UCLASS()
 class FINALYEARPROJECT_API AVRGameMode : public AGameModeBase
 {
@@ -34,6 +37,8 @@ protected:
 	virtual void BeginPlay() override;
 
 	virtual void Tick(float DeltaTime) override;
+
+	void GenerateItemList();
 
 	UPROPERTY(EditDefaultsOnly, Category = "Timer")
 	float TimePerRound;
@@ -54,7 +59,32 @@ protected:
 
 	FRotator PlayerStartRot;
 
-
+	// lists for high, mid and low shelf items
+	TArray<FString> HighListItems
+	{	"Bread",
+		"Milk",
+		"Honey",
+		"Butter",
+		"Pizza",
+		"Apple"
+	};
+	TArray<FString> MidListItems
+	{	"Banana",
+		"Cola",
+		"Chicken",
+		"Pasta",
+		"Orange",
+		"Cabbage"
+	};
+	TArray<FString> LowListItems
+	{	"Chocolate Bar",
+		"Can of Beans",
+		"Champagne",
+		"Popcorn",
+		"Potatoes",
+		"Magazine"
+	};
+	// generated list of items the player will need to collect.
 	TArray<FString> ItemList;
 
 	void EndTimedGame();
@@ -81,7 +111,12 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Gameplay Timer")
 	int GetTimeRemaining();
 
+	void ItemCollected(FString ItemTag);
+
 	UPROPERTY(BlueprintAssignable, BlueprintCallable)
 	FShoppingListBroadcastDelegate OnItemListUpdated;
+
+	UPROPERTY()
+	FGameResetDelegate OnGameReset;
 	
 };
