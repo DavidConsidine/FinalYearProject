@@ -10,7 +10,8 @@
 #include "VRController.h"
 #include "VRGameMode.h"
 #include "Components/WidgetInteractionComponent.h"
-#include "VRShoppingBasket.h"
+#include "Components/BoxComponent.h"
+#include "BasePickup.h"
 
 
 AVRCharacter::AVRCharacter()
@@ -21,6 +22,16 @@ AVRCharacter::AVRCharacter()
 	VROrigin->SetupAttachment(RootComponent);
 	CameraComp = CreateDefaultSubobject<UCameraComponent>(TEXT("CameraComp"));
 	CameraComp->SetupAttachment(VROrigin);
+
+	// set up trigger volume
+	PickupTriggerVolumeComp = CreateDefaultSubobject<UBoxComponent>(TEXT("PickupTriggerVolumeComp"));
+	PickupTriggerVolumeComp->SetupAttachment(VROrigin);
+	//PickupTriggerVolumeComp->SetRelativeTransform(VROrigin->GetComponentTransform());
+	PickupTriggerVolumeComp->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+	PickupTriggerVolumeComp->SetCollisionResponseToAllChannels(ECR_Ignore);
+	PickupTriggerVolumeComp->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
+	PickupTriggerVolumeComp->OnComponentBeginOverlap.AddDynamic(this, &AVRCharacter::OnOverlapBegin);
+	
 
 	//GetCapsuleComponent()->SetupAttachment(RootComponent);
 
@@ -102,7 +113,12 @@ void AVRCharacter::BeginPlay()
 		// if anything needs to be done HMD related
 		//RootComponent = VROrigin;
 		SetRootComponent(VROrigin);
-		//GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		GetCapsuleComponent()->SetCollisionResponseToAllChannels(ECR_Ignore);
+
+		FAttachmentTransformRules TriggerVolumeTransformRules(EAttachmentRule::KeepRelative, EAttachmentRule::KeepRelative, EAttachmentRule::KeepWorld, true);
+
+		PickupTriggerVolumeComp->AttachToComponent(CameraComp, TriggerVolumeTransformRules);
 		//CameraComp->AttachToComponent(RootComponent, );
 
 		// TODO: remove when testing standing up
@@ -125,9 +141,6 @@ void AVRCharacter::BeginPlay()
 			{
 				VRController_L->SetHand(EControllerHand::Left);
 				VRController_L->AttachToComponent(RootComponent, TransformRules);
-
-				UE_LOG(LogTemp, Warning, TEXT("left controller spawned successful"));
-
 				PreviousLeftMControllerPos = CurrentLeftMControllerPos = VRController_L->GetControllerRelativeLocation();
 			}
 			// Right
@@ -136,7 +149,6 @@ void AVRCharacter::BeginPlay()
 			{
 				VRController_R->SetHand(EControllerHand::Right);
 				VRController_R->AttachToComponent(RootComponent, TransformRules);
-				UE_LOG(LogTemp, Warning, TEXT("right controller spawned successful"));
 				PreviousRightMControllerPos = CurrentRightMControllerPos = VRController_R->GetControllerRelativeLocation();
 			}
 		}
@@ -342,6 +354,38 @@ void AVRCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 	PlayerInputComponent->BindAxis("LookUpRate", this, &AVRCharacter::LookUpAtRate);
 }
 
+void AVRCharacter::OnOverlapBegin(UPrimitiveComponent * OverlappedComp, AActor * OtherActor, UPrimitiveComponent * OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult & SweepResult)
+{
+	UE_LOG(LogTemp, Warning, TEXT("OnOverlapBegin"));
+	ABasePickup* ShoppingItem = Cast<ABasePickup>(OtherActor);
+	AVRController* MotionController = Cast<AVRController>(OtherActor);
+
+	// if overlapping actor is a pickup object
+	if (ShoppingItem != nullptr)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Item added to basket"));
+		ShoppingItem->AddedToBasket();
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("no overlap with basepickup"));
+	}
+
+	// if overlapping actor is a motioncontroller
+		// check whether it was the left or right controller
+	if (MotionController != nullptr)
+	{
+		if (MotionController->GetHand() == EControllerHand::Left)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Left controller overlap"));
+		}
+		else if (MotionController->GetHand() == EControllerHand::Right)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Right controller overlap"));
+		}
+	}
+}
+
 void AVRCharacter::Click()
 {
 	AVRGameMode* GameMode = Cast<AVRGameMode>(GetWorld()->GetAuthGameMode());
@@ -377,7 +421,6 @@ void AVRCharacter::OnResetVR()
 	{
 		UHeadMountedDisplayFunctionLibrary::ResetOrientationAndPosition();
 	}	
-	
 }
 
 
@@ -422,7 +465,6 @@ void AVRCharacter::CancelTeleport()
 
 void AVRCharacter::SetTelState(ETeleportState NewState)
 {
-	UE_LOG(LogTemp, Warning, TEXT("SetTelState: Setting State from %d to %d"), (int)TelState, (int)NewState)
 	TelState = NewState;
 }
 
@@ -696,13 +738,11 @@ void AVRCharacter::MoveRight(float Val)
 			AddMovementInput(GetActorRightVector(), Val);
 		}
 	}
-	
 }
 
 
 void AVRCharacter::TurnAtRate(float Rate)
 {
-	GEngine->AddOnScreenDebugMessage(0, 0.5f, FColor::Yellow, "TurnAtRate", true);
 	// calculate delta for this frame from the rate information
 	AddControllerYawInput(Rate * BaseTurnRate * GetWorld()->GetDeltaSeconds());
 }
@@ -710,7 +750,6 @@ void AVRCharacter::TurnAtRate(float Rate)
 
 void AVRCharacter::LookUpAtRate(float Rate)
 {
-	GEngine->AddOnScreenDebugMessage(0, 0.5f, FColor::Yellow, "LookUpAtRate", true);
 	// calculate delta for this frame from the rate information
 	AddControllerPitchInput(Rate * BaseLookUpRate * GetWorld()->GetDeltaSeconds());
 }

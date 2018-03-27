@@ -2,6 +2,13 @@
 Prescribed Virtual Reality: An examination of the potential of VR applications in healthcare.
 Game Title: Off The Shelf: On The Move 
 
+## 27. Overlapping fixes ##
+
+	- Remove BP_VRShoppingBasket from level.
+	- Add Box Component to VRCharacter.
+	- Setup Box Component to overlap with BasePickup objects and MotionControllers.
+	- BasePickup overlap implementation fixes.
+
 ## 26. BasePickup Reset Implementation ##
 
 	- Set up delegate in VRGameMode to broadcast when a game reset occurs.

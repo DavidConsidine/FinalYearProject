@@ -82,6 +82,8 @@ public:
 	USkeletalMeshComponent* GetSkeletalMeshComponent();
 
 	void SetHand(EControllerHand Hand);
+
+	EControllerHand GetHand();
 	
 	FVector GetControllerRelativeLocation();
 

@@ -37,6 +37,7 @@ class AVRController;
 class USceneComponent;
 class UUserWidget;
 class UWidgetInteractionComponent;
+class UBoxComponent;
 
 UCLASS()
 class FINALYEARPROJECT_API AVRCharacter : public ACharacter
@@ -51,6 +52,10 @@ protected:
 	/** First person camera */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 	UCameraComponent* CameraComp;
+
+	/** trigger volume for overlapping pickup objects */
+	UPROPERTY(EditDefaultsOnly, Category = "PickupTriggerVolume")
+	UBoxComponent* PickupTriggerVolumeComp;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "MotionController")
 	TSubclassOf<AVRController> MotionControllerClass;
@@ -144,6 +149,10 @@ protected:
 
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
+
+	UFUNCTION()
+	void OnOverlapBegin(UPrimitiveComponent * OverlappedComp, AActor * OtherActor,
+		UPrimitiveComponent * OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult & SweepResult);
 
 	// interacting with menu widget
 	void Click();

@@ -11,6 +11,7 @@ ABasePickup::ABasePickup()
 	MeshComp = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("MeshComp"));
 	RootComponent = MeshComp;
 
+	MeshComp->SetCollisionObjectType(ECollisionChannel::ECC_Pawn);
 	MeshComp->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 
 	MeshComp->SetSimulatePhysics(true);
@@ -68,21 +69,18 @@ void ABasePickup::AddedToBasket()
 	UWorld* World = GetWorld();
 	if (World)
 	{
-		World->GetTimerManager().SetTimer(TimerHandle, this, &ABasePickup::RemoveFromBasket, 1.5f);
-
 		AVRGameMode* GM = Cast<AVRGameMode>(World->GetAuthGameMode());
 		if (GM != nullptr)
 		{
 			GM->ItemCollected(ItemTag);
+			RemoveFromBasket();
 		}
 	}
-	
 }
 
 void ABasePickup::RemoveFromBasket()
 {
-	// spawn particle system
-	UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), ParticleFX, GetActorTransform());
+	// play sound
 
 	// TODO: store reset location, disable object and move back to original position for mode reset.
 	SetActorHiddenInGame(true);
@@ -92,7 +90,6 @@ void ABasePickup::RemoveFromBasket()
 
 void ABasePickup::BeginPlay()
 {
-	OnActorBeginOverlap.AddDynamic(this, &ABasePickup::ActorOverlap);
 	StartingTransform = GetActorTransform();
 
 	UWorld* World = GetWorld();
@@ -118,9 +115,3 @@ void ABasePickup::ResetVisibilityAndPosition()
 		MeshComp->SetSimulatePhysics(true);
 	}
 }
-
-void ABasePickup::ActorOverlap(AActor * OverlappedActor, AActor * OtherActor)
-{
-	UE_LOG(LogTemp, Warning, TEXT("Overlap pickup with %s"), *OtherActor->GetName());
-}
-

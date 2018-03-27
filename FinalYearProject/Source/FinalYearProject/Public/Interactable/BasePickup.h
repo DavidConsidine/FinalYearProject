@@ -40,9 +40,6 @@ protected:
 	UPROPERTY(VisibleDefaultsOnly, Category = "Mesh Component")
 	UStaticMeshComponent* MeshComp;
 
-	UPROPERTY(EditDefaultsOnly, Category = "FX")
-	UParticleSystem* ParticleFX;
-
 	UPROPERTY(EditAnywhere, Category = "Item Tag")
 	FString ItemTag;
 
@@ -58,7 +55,4 @@ protected:
 
 	UFUNCTION()
 	void ResetVisibilityAndPosition();
-
-	UFUNCTION()
-	void ActorOverlap(AActor* OverlappedActor, AActor* OtherActor);
 };

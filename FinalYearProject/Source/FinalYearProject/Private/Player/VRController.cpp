@@ -119,6 +119,11 @@ void AVRController::SetHand(EControllerHand Hand)
 	}
 }
 
+EControllerHand AVRController::GetHand()
+{
+	return MotionControllerComp->Hand;
+}
+
 FVector AVRController::GetControllerRelativeLocation()
 {
 	return MotionControllerComp->GetRelativeTransform().GetLocation();
