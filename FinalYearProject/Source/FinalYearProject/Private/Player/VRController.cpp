@@ -117,6 +117,11 @@ void AVRController::SetHand(EControllerHand Hand)
 	{
 		MotionControllerMeshComp->SetRelativeScale3D(FVector(1.0f, 1.0f, -1.0));
 	}
+	else if(MotionControllerComp->Hand == EControllerHand::Left)
+	{
+		// destroy teleport cursor spawned by left hand controller.
+		TeleportCursor->Destroy();
+	}
 }
 
 EControllerHand AVRController::GetHand()

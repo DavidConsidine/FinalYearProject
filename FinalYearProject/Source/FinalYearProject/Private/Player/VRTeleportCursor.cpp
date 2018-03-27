@@ -44,12 +44,9 @@ bool AVRTeleportCursor::IsVisible()
 void AVRTeleportCursor::UpdateCursor(const FVector & ImpactLocation)
 {
 	// TODO: check if offset need to avoid mesh colliding with surface
-	float Offset = 55.f; // test values
-	FVector NewLocation = FVector(ImpactLocation.X, ImpactLocation.Y, ImpactLocation.Z + Offset);
-	SetActorLocation(NewLocation, true);
+	//float Offset = 55.f; // test values
+	//FVector NewLocation = FVector(ImpactLocation.X, ImpactLocation.Y, ImpactLocation.Z + Offset);
+	SetActorLocation(ImpactLocation, true);
 	
-	float x = NewLocation.X;
-	float y = NewLocation.Y;
-	float z = NewLocation.Z;
 }
 

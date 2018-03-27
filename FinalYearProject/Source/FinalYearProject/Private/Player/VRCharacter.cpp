@@ -426,7 +426,7 @@ void AVRCharacter::OnResetVR()
 
 void AVRCharacter::StartTeleport()
 {
-	if (!VRController_R->GetTeleporting() && TelState == Wait)
+	if (bCanMove && !VRController_R->GetTeleporting() && TelState == Wait)
 	{
 		SetTelState(Aiming);
 		VRController_R->SetTeleporting(true);

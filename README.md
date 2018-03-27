@@ -2,6 +2,20 @@
 Prescribed Virtual Reality: An examination of the potential of VR applications in healthcare.
 Game Title: Off The Shelf: On The Move 
 
+## 28. Teleport Cursor visuals improvement ##
+
+	- Add BeamMesh asset from VR Template.
+	- Rename BeamMesh to SM_BeamMesh.
+	- Add M_ArcEndpoint asset from VR Template.
+	- Add M_TeleportPreviews asset from VR Template.
+	- Add MI_TeleportCylinderPreview asset from VR Template.
+	- Add MF_OccludedPixels asset from VR Template.
+	- Add TeleportMCP asset from VR Template.
+	- Apply MI_TeleportCylinderPreview to VRTeleportCursor static mesh.
+	- Destroy Left controller's spawned teleport cursor.
+	- Set TeleportCursor visibility to false on spawn.
+	- Fix teleport feature being used when movement should be disabled.
+
 ## 27. Overlapping fixes ##
 
 	- Remove BP_VRShoppingBasket from level.
