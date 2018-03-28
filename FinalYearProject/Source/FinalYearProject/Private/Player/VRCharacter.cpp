@@ -81,6 +81,11 @@ void AVRCharacter::DisableMenuComponents()
 		ModeSelectMenu->SetActorHiddenInGame(true);
 	}
 
+	if (PauseMenu != nullptr)
+	{
+		PauseMenu->SetActorHiddenInGame(true);
+	}
+
 	if (WidgetInteractionComp != nullptr && WidgetInteractionComp->bIsActive)
 	{
 		WidgetInteractionComp->Activate(false);
@@ -89,10 +94,22 @@ void AVRCharacter::DisableMenuComponents()
 
 void AVRCharacter::EnableMenuComponents()
 {
-	if (ModeSelectMenu != nullptr)
+	AVRGameMode* GM = Cast<AVRGameMode>(GetWorld()->GetAuthGameMode());
+	if (GM != nullptr && GM->GetCurrentGameMode() == MenuSelect)
 	{
-		ModeSelectMenu->SetActorHiddenInGame(false);
+		if (ModeSelectMenu != nullptr)
+		{
+			ModeSelectMenu->SetActorHiddenInGame(false);
+		}
 	}
+	else
+	{
+		if (PauseMenu != nullptr)
+		{
+			PauseMenu->SetActorHiddenInGame(false);
+		}
+	}
+	
 
 	if (WidgetInteractionComp != nullptr && WidgetInteractionComp->bIsActive)
 	{
@@ -171,15 +188,12 @@ void AVRCharacter::BeginPlay()
 	AVRGameMode* GameMode = Cast<AVRGameMode>(GetWorld()->GetAuthGameMode());
 	if (GameMode != nullptr) 
 	{
-		UE_LOG(LogTemp, Warning, TEXT("AVRCharacter::BeginPlay - VRGameMode valid"));
-		switch (GameMode->GetCurrentGameMode())
+		if (GameMode->GetCurrentGameMode() == MenuSelect)
 		{
-		case MenuSelect:
 			// set up mode select widget
 			ModeSelectMenu = GetWorld()->SpawnActor<AActor>(ModeSelectClass, MenuTransform, SpawnParams);
 			if (ModeSelectMenu != nullptr)
 			{
-				UE_LOG(LogTemp, Warning, TEXT("AVRCharacter::BeginPlay - ModeSelectMenu valid"));
 				FAttachmentTransformRules ModeSelectTransformRules(EAttachmentRule::SnapToTarget, EAttachmentRule::KeepWorld, EAttachmentRule::KeepWorld, false);
 				// add menu to left hand controller
 				if (VRController_L)
@@ -192,11 +206,6 @@ void AVRCharacter::BeginPlay()
 					NewRot.Add(90.0f, 180.0f, 90.0f);
 					ModeSelectMenu->SetActorRotation(NewRot);
 				}
-				else
-				{
-					// error with set up. comment out following else statement
-					// rotate widget so it's visible to player camera
-				}
 				// set up widget interaction component on right controller
 				FAttachmentTransformRules WidgetInteractionCompTransformRules(EAttachmentRule::SnapToTarget, EAttachmentRule::KeepWorld, EAttachmentRule::KeepWorld, false);
 
@@ -204,34 +213,13 @@ void AVRCharacter::BeginPlay()
 				{
 					WidgetInteractionComp->AttachToComponent(VRController_R->GetSkeletalMeshComponent(), WidgetInteractionCompTransformRules, "menu_pointer_pos");
 					WidgetInteractionComp->Activate(true);
-					
+
 				}
 				else
 				{
 					UE_LOG(LogTemp, Warning, TEXT("AVRCharacter::BeginPlay - VRController_R not valid. WidgetInteractionComponent setup failed."));
 				}
-
 			}
-
-			UE_LOG(LogTemp, Warning, TEXT("AVRCharacter::BeginPlay - GameMode = menu select"));
-			break;
-		case FreeRoam:
-			UE_LOG(LogTemp, Warning, TEXT("AVRCharacter::BeginPlay - GameMode = free roam"));
-			break;
-		case TimedLow:
-			UE_LOG(LogTemp, Warning, TEXT("AVRCharacter::BeginPlay - GameMode = timed low"));
-			break;
-		case TimedMid:
-			UE_LOG(LogTemp, Warning, TEXT("AVRCharacter::BeginPlay - GameMode = timed mid"));
-			break;
-		case TimedHigh:
-			UE_LOG(LogTemp, Warning, TEXT("AVRCharacter::BeginPlay - GameMode = timed high"));
-			break;
-		case TimedAll:
-			UE_LOG(LogTemp, Warning, TEXT("AVRCharacter::BeginPlay - GameMode = timed all"));
-			break;
-		default:
-			break;
 		}
 	}
 	else
@@ -239,7 +227,6 @@ void AVRCharacter::BeginPlay()
 		UE_LOG(LogTemp, Warning, TEXT("AVRCharacter::BeginPlay - VRGameMode not valid"));
 	}
 	
-
 	// ui set up
 	if (WidgetClass)
 	{
@@ -259,25 +246,20 @@ void AVRCharacter::Tick(float DeltaTime)
 	switch (TelState)
 	{
 	case Wait:
-		GEngine->AddOnScreenDebugMessage(0, 0.5f, FColor::Yellow, "TelState: Wait", true);
 		break;
 	case Aiming:
-		GEngine->AddOnScreenDebugMessage(0, 0.5f, FColor::Yellow, "TelState: Aiming", true);
 		CheckValidTeleportLocation();
 		break;
 	case FadeOut:
-		GEngine->AddOnScreenDebugMessage(0, 0.5f, FColor::Yellow, "TelState: FadeOut", true);
 		if (DoScreenFade(true))
 		{
 			SetTelState(Teleport);
 		}
 		break;
 	case Teleport:
-		GEngine->AddOnScreenDebugMessage(0, 0.5f, FColor::Yellow, "TelState: Teleport", true);
 		OnTeleport();
 		break;
 	case FadeIn:
-		GEngine->AddOnScreenDebugMessage(0, 0.5f, FColor::Yellow, "TelState: FadeIn", true);
 		if (DoScreenFade(false))
 		{
 			SetTelState(Wait);
@@ -342,6 +324,9 @@ void AVRCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 
 	PlayerInputComponent->BindAction("ResetVR", IE_Pressed, this, &AVRCharacter::OnResetVR);
 
+	// binding for pause menu
+	PlayerInputComponent->BindAction("Pause", IE_Pressed, this, &AVRCharacter::PauseGame);
+
 	// Bind movement events
 	PlayerInputComponent->BindAxis("MoveForward", this, &AVRCharacter::MoveForward);
 	PlayerInputComponent->BindAxis("MoveRight", this, &AVRCharacter::MoveRight);
@@ -357,19 +342,13 @@ void AVRCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 
 void AVRCharacter::OnOverlapBegin(UPrimitiveComponent * OverlappedComp, AActor * OtherActor, UPrimitiveComponent * OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult & SweepResult)
 {
-	UE_LOG(LogTemp, Warning, TEXT("OnOverlapBegin"));
 	ABasePickup* ShoppingItem = Cast<ABasePickup>(OtherActor);
 	AVRController* MotionController = Cast<AVRController>(OtherActor);
 
 	// if overlapping actor is a pickup object
 	if (ShoppingItem != nullptr)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Item added to basket"));
 		ShoppingItem->AddedToBasket();
-	}
-	else
-	{
-		UE_LOG(LogTemp, Warning, TEXT("no overlap with basepickup"));
 	}
 
 	// if overlapping actor is a motioncontroller
@@ -389,29 +368,19 @@ void AVRCharacter::OnOverlapBegin(UPrimitiveComponent * OverlappedComp, AActor *
 
 void AVRCharacter::Click()
 {
-	AVRGameMode* GameMode = Cast<AVRGameMode>(GetWorld()->GetAuthGameMode());
-	// check that mode select is current game mode
-	if (GameMode != nullptr && GameMode->GetCurrentGameMode() == MenuSelect)
+	// assuming interaction widget & R motion controller are valid 
+	if (WidgetInteractionComp && WidgetInteractionComp->bIsActive)
 	{
-		// assuming interaction widget & R motion controller are valid 
-		if (WidgetInteractionComp)
-		{
-			WidgetInteractionComp->PressPointerKey(EKeys::LeftMouseButton);
-		}
+		WidgetInteractionComp->PressPointerKey(EKeys::LeftMouseButton);
 	}
 }
 
 void AVRCharacter::Release()
 {
-	AVRGameMode* GameMode = Cast<AVRGameMode>(GetWorld()->GetAuthGameMode());
-	// check that mode select is current game mode
-	if (GameMode != nullptr && GameMode->GetCurrentGameMode() == MenuSelect)
+	// assuming interaction widget & R motion controller are valid 
+	if (WidgetInteractionComp && WidgetInteractionComp->bIsActive)
 	{
-		// assuming interaction widget & R motion controller are valid 
-		if (WidgetInteractionComp)
-		{
-			WidgetInteractionComp->ReleasePointerKey(EKeys::LeftMouseButton);
-		}
+		WidgetInteractionComp->ReleasePointerKey(EKeys::LeftMouseButton);
 	}
 }
 
@@ -513,14 +482,12 @@ bool AVRCharacter::DoScreenFade(bool FadeOut)
 
 	if (WidgetImage == nullptr)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("DoScreenFade : WidgetImage == nullptr"));
 		return false;
 	}
 
 	auto Image = Cast<UImage>(WidgetImage);
 	if (Image == nullptr)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("DoScreenFade : Image == nullptr"));
 		return false;
 	}
 
@@ -536,6 +503,33 @@ bool AVRCharacter::DoScreenFade(bool FadeOut)
 	}
 
 	return false;
+}
+
+void AVRCharacter::SetupPauseMenu()
+{
+	FActorSpawnParameters SpawnParams;
+	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+	FTransform MenuTransform = VRController_L->GetTransform();
+
+	PauseMenu = GetWorld()->SpawnActor<AActor>(PauseMenuClass, MenuTransform, SpawnParams);
+	if (PauseMenu != nullptr)
+	{
+		FAttachmentTransformRules PauseMenuTransformRules(EAttachmentRule::SnapToTarget, EAttachmentRule::KeepWorld, EAttachmentRule::KeepWorld, false);
+		// add menu to left hand controller
+		if (VRController_L)
+		{
+			PauseMenu->AttachToComponent(VRController_L->GetSkeletalMeshComponent(), PauseMenuTransformRules, "menu_pos");
+
+			// rotate widget so it's visible to player camera
+			FRotator NewRot = PauseMenu->GetActorRotation();
+			//NewRot.Add(90.0f, 180.0f, 90.0f);
+			NewRot.Add(90.0f, 180.0f, 90.0f);
+			PauseMenu->SetActorRotation(NewRot);
+
+			WidgetInteractionComp->SetActive(true);
+		}
+	}
+
 }
 
 void AVRCharacter::LeftGripPressed()
@@ -753,4 +747,28 @@ void AVRCharacter::LookUpAtRate(float Rate)
 {
 	// calculate delta for this frame from the rate information
 	AddControllerPitchInput(Rate * BaseLookUpRate * GetWorld()->GetDeltaSeconds());
+}
+
+void AVRCharacter::PauseGame()
+{
+	AVRGameMode* GameMode = Cast<AVRGameMode>(GetWorld()->GetAuthGameMode());
+	if (GameMode != nullptr)
+	{
+		EGameMode Mode = GameMode->GetCurrentGameMode();
+		if (Mode == MenuSelect || Mode == ModeReset)
+		{
+			return;
+		}
+		// call pause function on game mode
+		GameMode->PauseGame();
+
+		if (PauseMenu != nullptr)
+		{
+			EnableMenuComponents();
+		}
+		else
+		{
+			SetupPauseMenu();
+		}
+	}
 }

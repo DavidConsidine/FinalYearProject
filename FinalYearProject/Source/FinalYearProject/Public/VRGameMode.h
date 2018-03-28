@@ -126,5 +126,13 @@ public:
 
 	UPROPERTY()
 	FGameResetDelegate OnGameReset;
+
+	void PauseGame();
+
+	UFUNCTION(BlueprintCallable)
+	void ResumeGame();
+
+	UFUNCTION(BlueprintCallable)
+	void ReturnToModeSelect();
 	
 };

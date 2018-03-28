@@ -75,11 +75,17 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "MenuWidget")
 	TSubclassOf<AActor> ModeSelectClass;
 
+	// Pause Menu widget
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "MenuWidget")
+	TSubclassOf<AActor> PauseMenuClass;
+
 	// Widget Interaction component for mode select widget
 	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = "MenuWidget")
 	UWidgetInteractionComponent* WidgetInteractionComp;
 
 	AActor* ModeSelectMenu;
+
+	AActor* PauseMenu;
 
 
 protected:
@@ -182,6 +188,8 @@ protected:
 	/** Perform fade in/out */
 	bool DoScreenFade(bool FadeOut);
 
+	void SetupPauseMenu();
+
 	///////////////////////////////////////////
 
 	// gesture movement related funtions
@@ -235,6 +243,8 @@ protected:
 	* @param Rate	This is a normalized rate, i.e. 1.0 means 100% of desired turn rate
 	*/
 	void LookUpAtRate(float Rate);
+
+	void PauseGame();
 
 public:	
 	

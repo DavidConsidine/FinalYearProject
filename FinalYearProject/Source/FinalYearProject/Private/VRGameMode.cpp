@@ -126,9 +126,6 @@ void AVRGameMode::GenerateObjectiveItemListFromAllItemLists()
 
 void AVRGameMode::EndTimedGame()
 {
-	GEngine->AddOnScreenDebugMessage(0, 0.5f, FColor::Yellow, "Time's up", true);
-	UE_LOG(LogTemp, Warning, TEXT("Time's up!"));
-
 	// round finished, return to mode select
 	SetCurrentGameMode(ModeReset);
 	
@@ -197,9 +194,9 @@ void AVRGameMode::PrepareGameMode()
 		PlayerChar->SetCanMove(true);
 		break;
 	case ModeReset:
-		UE_LOG(LogTemp, Warning, TEXT("ModeReset"));
 		// disable player movement
 		PlayerChar->SetCanMove(false);
+		PlayerChar->DisableMenuComponents();
 		Cast<APlayerController>(PlayerChar->GetController())->PlayerCameraManager->StartCameraFade(0.0, 1.0, FadeDelayTime, FLinearColor::Black, false, true);
 		OnGameReset.Broadcast();
 		// set timer for delay during camera fade so reposition happens at max fade out.
@@ -235,4 +232,44 @@ void AVRGameMode::RepositionPlayer()
 	//recall prepare game mode
 	ItemList.Empty();
 	SetCurrentGameMode(MenuSelect);
+}
+
+void AVRGameMode::PauseGame()
+{
+	PlayerChar->SetCanMove(false);
+	UWorld * World = GetWorld();
+	if (World)
+	{
+		if (World->GetTimerManager().IsTimerActive(RoundTimerHandle))
+		{
+			World->GetTimerManager().PauseTimer(RoundTimerHandle);
+		}
+	}
+}
+
+void AVRGameMode::ResumeGame()
+{
+	PlayerChar->SetCanMove(true);
+	PlayerChar->DisableMenuComponents();
+	UWorld * World = GetWorld();
+	if (World)
+	{
+		if (World->GetTimerManager().IsTimerPaused(RoundTimerHandle))
+		{
+			World->GetTimerManager().UnPauseTimer(RoundTimerHandle);
+		}
+	}
+}
+
+void AVRGameMode::ReturnToModeSelect()
+{
+	UWorld * World = GetWorld();
+	if (World)
+	{
+		if (World->GetTimerManager().IsTimerActive(RoundTimerHandle))
+		{
+			World->GetTimerManager().ClearTimer(RoundTimerHandle);
+		}
+	}
+	SetCurrentGameMode(ModeReset);
 }

@@ -2,6 +2,12 @@
 Prescribed Virtual Reality: An examination of the potential of VR applications in healthcare.
 Game Title: Off The Shelf: On The Move 
 
+## 31. Pause Menu ##
+
+	- Create WBP_PauseMenu.
+	- Create BP_PauseMenuWidget.
+	- Implement Pause menu. (Resume, return to mode select).
+
 ## 30. Objective Item List ##
 
 	- Add item list generation implementation to VRGameMode class.
