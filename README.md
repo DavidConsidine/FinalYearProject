@@ -2,6 +2,10 @@
 Prescribed Virtual Reality: An examination of the potential of VR applications in healthcare.
 Game Title: Off The Shelf: On The Move 
 
+## 30. Objective Item List ##
+
+	- Add item list generation implementation to VRGameMode class.
+	
 ## 29. Teleport Cursor Spline Arc Implementation ##
 
 	- Add USplineComponent implementation to VRController class.

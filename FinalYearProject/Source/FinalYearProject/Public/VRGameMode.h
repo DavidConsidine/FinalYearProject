@@ -38,7 +38,10 @@ protected:
 
 	virtual void Tick(float DeltaTime) override;
 
-	void GenerateItemList();
+
+	void GenerateObjectiveItemList(int32 NumOfItems, int32 ItemList);
+
+	void GenerateObjectiveItemListFromAllItemLists();
 
 	UPROPERTY(EditDefaultsOnly, Category = "Timer")
 	float TimePerRound;
@@ -59,31 +62,36 @@ protected:
 
 	FRotator PlayerStartRot;
 
+	UPROPERTY(EditDefaultsOnly)
+	int32 NumberOfItemsRequired = 10;
+
 	// lists for high, mid and low shelf items
-	TArray<FString> HighListItems
-	{	"Bread",
-		"Milk",
-		"Honey",
-		"Butter",
-		"Pizza",
-		"Apple"
+	TArray<TArray<FString>> ItemLists{ {
+			"Chocolate Bar",
+			"Can of Beans",
+			"Champagne",
+			"Popcorn",
+			"Potatoes",
+			"Magazine" 
+		}, 
+		{
+			"Banana",
+			"Cola",
+			"Chicken",
+			"Pasta",
+			"Orange",
+			"Cabbage" 
+		}, 
+		{
+			"Bread",
+			"Milk",
+			"Honey",
+			"Butter",
+			"Pizza",
+			"Apple"
+		} 
 	};
-	TArray<FString> MidListItems
-	{	"Banana",
-		"Cola",
-		"Chicken",
-		"Pasta",
-		"Orange",
-		"Cabbage"
-	};
-	TArray<FString> LowListItems
-	{	"Chocolate Bar",
-		"Can of Beans",
-		"Champagne",
-		"Popcorn",
-		"Potatoes",
-		"Magazine"
-	};
+
 	// generated list of items the player will need to collect.
 	TArray<FString> ItemList;
 

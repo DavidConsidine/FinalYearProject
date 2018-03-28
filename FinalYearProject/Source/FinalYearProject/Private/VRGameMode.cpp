@@ -76,22 +76,51 @@ void AVRGameMode::Tick(float DeltaTime)
 }
 
 // helper function to generate item list
-void AVRGameMode::GenerateItemList()
+void AVRGameMode::GenerateObjectiveItemList(int32 NumOfItems, int32 ShelfItemList)
 {
-	switch (CurrentGameMode)
+	if (NumOfItems == 0)
 	{
-	case TimedLow:
-		break;
-	case TimedMid:
-		break;
-	case TimedHigh:
-		break;
-	case TimedAll:
-		break;
+		return;
 	}
-	ItemList.Add("Sphere");
-	ItemList.Add("Cube");
-	ItemList.Add("Pyramid");
+
+	if (NumOfItems > ItemLists[ShelfItemList].Num())
+	{
+		NumOfItems = ItemLists[ShelfItemList].Num();
+	}
+
+	const int32 TotalNumInList = ItemLists[ShelfItemList].Num();
+	TArray<int32> ItemTracker;
+	for (int32 i = 0; i < TotalNumInList; i++)
+	{
+		ItemTracker.Add(0);
+	}
+	
+	for (int32 i = 0; i < NumOfItems; )
+	{
+		int32 RandNum = FMath::RandRange(0, TotalNumInList - 1);
+		if (ItemTracker[RandNum] == 0)
+		{
+			ItemTracker[RandNum]++;
+			ItemList.Add(ItemLists[ShelfItemList][RandNum]);
+			i++;
+		}
+	}
+}
+
+void AVRGameMode::GenerateObjectiveItemListFromAllItemLists()
+{
+	TArray<int32> ItemsPerList{ 0,0,0 };
+
+	for (int32 i = 0; i < NumberOfItemsRequired; i++)
+	{
+		int32 RandNum = FMath::RandRange(0, ItemLists.Num() - 1);
+		ItemsPerList[RandNum]++;
+	}
+
+	for (int32 i = 0; i < ItemsPerList.Num(); i++)
+	{
+		GenerateObjectiveItemList(ItemsPerList[i], i);
+	}
 
 }
 
@@ -125,7 +154,7 @@ void AVRGameMode::PrepareGameMode()
 		// generate list of required items (specifically low positioned items)
 		// enable player movement
 		PlayerChar->SetCanMove(true);
-		GenerateItemList();
+		GenerateObjectiveItemList(NumberOfItemsRequired, 0);
 		OnItemListUpdated.Broadcast(ItemList);
 		break;
 	case TimedMid:
@@ -136,7 +165,7 @@ void AVRGameMode::PrepareGameMode()
 		// generate list of required items (specifically mid positioned items)
 		// enable player movement
 		PlayerChar->SetCanMove(true);
-		GenerateItemList();
+		GenerateObjectiveItemList(NumberOfItemsRequired, 1);
 		OnItemListUpdated.Broadcast(ItemList);
 		break;
 	case TimedHigh:
@@ -147,7 +176,7 @@ void AVRGameMode::PrepareGameMode()
 		// generate list of required items (specifically high positioned items)
 		// enable player movement
 		PlayerChar->SetCanMove(true);
-		GenerateItemList();
+		GenerateObjectiveItemList(NumberOfItemsRequired, 2);
 		OnItemListUpdated.Broadcast(ItemList);
 		break;
 	case TimedAll:
@@ -158,7 +187,7 @@ void AVRGameMode::PrepareGameMode()
 		// generate list of required items (items in any position)
 		// enable player movement
 		PlayerChar->SetCanMove(true);
-		GenerateItemList();
+		GenerateObjectiveItemListFromAllItemLists();
 		OnItemListUpdated.Broadcast(ItemList);
 		break;
 	case FreeRoam:
@@ -204,5 +233,6 @@ void AVRGameMode::RepositionPlayer()
 	
 	// set to mode select mode
 	//recall prepare game mode
+	ItemList.Empty();
 	SetCurrentGameMode(MenuSelect);
 }
