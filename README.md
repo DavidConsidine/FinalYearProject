@@ -2,6 +2,11 @@
 Prescribed Virtual Reality: An examination of the potential of VR applications in healthcare.
 Game Title: Off The Shelf: On The Move 
 
+## 29. Teleport Cursor Spline Arc Implementation ##
+
+	- Add USplineComponent implementation to VRController class.
+	- Add M_SplineArcMat asset from VR Template.
+
 ## 28. Teleport Cursor visuals improvement ##
 
 	- Add BeamMesh asset from VR Template.

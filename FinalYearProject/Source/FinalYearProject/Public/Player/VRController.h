@@ -14,6 +14,10 @@ class USphereComponent;
 class ABasePickup;
 class USkeletalMeshComponent;
 class AVRTeleportCursor;
+class USplineComponent;
+class USplineMeshComponent;
+class UStaticMesh;
+class UMaterialInterface;
 
 UCLASS()
 class FINALYEARPROJECT_API AVRController : public AActor
@@ -32,7 +36,7 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "TeleportCursor")
 	TSubclassOf<AVRTeleportCursor> TeleportCursorClass;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY()
 	AVRTeleportCursor* TeleportCursor;
 
 	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = "MotionController")
@@ -46,6 +50,12 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "SphereComponent")
 	float SphereRadius;
+
+	UPROPERTY(VisibleAnywhere)
+	USplineComponent* TeleportSplineComp;
+
+	UPROPERTY()
+	TArray<USplineMeshComponent*> TeleportSpineMeshPool;
 
 	ABasePickup* CurrentPickupObject;
 
@@ -67,6 +77,13 @@ protected:
 
 	bool bValidTeleportPosition;
 
+	UPROPERTY(EditDefaultsOnly)
+	UStaticMesh* TeleportSplineMesh;
+
+	UPROPERTY(EditDefaultsOnly)
+	UMaterialInterface* TeleportSplineMaterial;
+
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -74,6 +91,12 @@ protected:
 	ABasePickup* GetObjectNearestToHand();
 
 	void UpdateTeleportCursor();
+
+	void UpdateTeleportArc();
+
+	void UpdateTeleportSpline(const TArray<FVector> &SplinePath);
+
+	void DrawTeleportArc(const TArray<FVector> &TeleportArc);
 
 public:	
 	// Called every frame

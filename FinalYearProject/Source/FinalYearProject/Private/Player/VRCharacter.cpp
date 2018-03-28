@@ -63,6 +63,7 @@ AVRCharacter::AVRCharacter()
 	WidgetInteractionComp->PointerIndex = 1.0f;
 	WidgetInteractionComp->TraceChannel = ECollisionChannel::ECC_Visibility;
 	WidgetInteractionComp->VirtualUserIndex = 1;
+
 }
 
 void AVRCharacter::SetCanMove(bool CanMove)

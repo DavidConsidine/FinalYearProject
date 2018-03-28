@@ -5,6 +5,8 @@
 #include "VRTeleportCursor.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "PhysicalMaterials/PhysicalMaterial.h"
+#include "Components/SplineComponent.h"
+#include "Components/SplineMeshComponent.h"
 
 AVRController::AVRController()
 {
@@ -21,9 +23,7 @@ AVRController::AVRController()
 	SphereRadius = 18.0f;
 	SphereComp->SetSphereRadius(SphereRadius);
 
-	// TODO: haptic feedback on collisions
-	/*SphereComp->OnComponentBeginOverlap.AddDynamic();
-	SphereComp->OnComponentEndOverlap.AddDynamic();*/
+	TeleportSplineComp = CreateDefaultSubobject<USplineComponent>(TEXT("TeleportSplineComp"));
 
 	// default anim state flags
 	bTeleporting = false;
@@ -52,10 +52,15 @@ void AVRController::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	if (bValidTeleportPosition)
+	if (MotionControllerComp->Hand == EControllerHand::Right && bValidTeleportPosition)
 	{
 		// update teleport cursor
 		UpdateTeleportCursor();
+	}
+	if (MotionControllerComp->Hand == EControllerHand::Right)
+	{
+		// update teleport arc
+		UpdateTeleportArc();
 	}
 }
 
@@ -121,6 +126,7 @@ void AVRController::SetHand(EControllerHand Hand)
 	{
 		// destroy teleport cursor spawned by left hand controller.
 		TeleportCursor->Destroy();
+		TeleportSplineComp->DestroyComponent();
 	}
 }
 
@@ -271,6 +277,76 @@ void AVRController::UpdateTeleportCursor()
 	if (TeleportCursor && TeleportCursor->IsVisible())
 	{
 		TeleportCursor->UpdateCursor(CurrentTeleportPosition);
+	}
+}
+
+void AVRController::UpdateTeleportArc()
+{
+	TArray<FVector> Path;
+
+	if (bValidTeleportPosition)
+	{
+		Path.Add(MotionControllerMeshComp->GetSocketLocation("teleport_start_pos"));
+		Path.Add(CurrentTeleportPosition);
+		DrawTeleportArc(Path);
+	}
+	else
+	{
+		// empty path
+		DrawTeleportArc(Path);
+	}
+
+}
+
+void AVRController::UpdateTeleportSpline(const TArray<FVector>& SplinePath)
+{
+	TeleportSplineComp->ClearSplinePoints(false);
+
+	for (int32 i = 0; i < SplinePath.Num(); i++)
+	{
+		FVector LocalPosition = TeleportSplineComp->GetComponentTransform().InverseTransformPosition(SplinePath[i]);
+		FSplinePoint Point(i, LocalPosition, ESplinePointType::Curve);
+		TeleportSplineComp->AddPoint(Point, false);
+	}
+	TeleportSplineComp->UpdateSpline();
+}
+
+void AVRController::DrawTeleportArc(const TArray<FVector>& TeleportArc)
+{
+	UpdateTeleportSpline(TeleportArc);
+
+	for (USplineMeshComponent* SplineMesh : TeleportSpineMeshPool)
+	{
+		SplineMesh->SetVisibility(false);
+	}
+
+	int32 NumSegments = TeleportArc.Num() - 1;
+	for (int32 i = 0; i < NumSegments; i++)
+	{
+		if (TeleportSpineMeshPool.Num() <= 1)
+		{
+			USplineMeshComponent* SplineMesh = NewObject<USplineMeshComponent>(this);
+			//SplineMesh->SetMobility(EComponentMobility::Movable);
+			//SplineMesh->AttachToComponent(MotionControllerComp, FAttachmentTransformRules::KeepRelativeTransform);
+			SplineMesh->SetStaticMesh(TeleportSplineMesh);
+			SplineMesh->SetMaterial(0, TeleportSplineMaterial);
+			SplineMesh->RegisterComponent();
+			SplineMesh->SetMobility(EComponentMobility::Movable);
+
+			TeleportSpineMeshPool.Add(SplineMesh);
+		}
+
+		USplineMeshComponent* SplineMesh = TeleportSpineMeshPool[i];
+
+		SplineMesh->SetStartAndEnd(
+			TeleportSplineComp->GetWorldLocationAtSplinePoint(i),
+			TeleportSplineComp->GetTangentAtSplinePoint(i, ESplineCoordinateSpace::World),
+			TeleportSplineComp->GetWorldLocationAtSplinePoint(i + 1),
+			TeleportSplineComp->GetTangentAtSplinePoint(i + 1, ESplineCoordinateSpace::World),
+			true
+		);
+
+		SplineMesh->SetVisibility(true);
 	}
 }
 
