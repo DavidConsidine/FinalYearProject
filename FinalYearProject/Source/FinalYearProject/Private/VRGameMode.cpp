@@ -12,7 +12,6 @@
 AVRGameMode::AVRGameMode()
 	: Super()
 {
-	UE_LOG(LogTemp, Warning, TEXT("AVRGameMode::AVRGameMode"))
 	TimePerRound = 120.0f;
 
 	FadeDelayTime = 1.0f;
@@ -72,7 +71,6 @@ void AVRGameMode::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	//OnItemListUpdated.Broadcast(ItemList);
 }
 
 // helper function to generate item list
@@ -148,9 +146,9 @@ void AVRGameMode::PrepareGameMode()
 		PlayerChar->DisableMenuComponents();
 		// initialise timer for round.
 		StartRoundTimer();
-		// generate list of required items (specifically low positioned items)
 		// enable player movement
 		PlayerChar->SetCanMove(true);
+		// generate list of required items (specifically low positioned items)
 		GenerateObjectiveItemList(NumberOfItemsRequired, 0);
 		OnItemListUpdated.Broadcast(ItemList);
 		break;
@@ -159,9 +157,9 @@ void AVRGameMode::PrepareGameMode()
 		PlayerChar->DisableMenuComponents();
 		// initialise timer for round.
 		StartRoundTimer();
-		// generate list of required items (specifically mid positioned items)
 		// enable player movement
 		PlayerChar->SetCanMove(true);
+		// generate list of required items (specifically mid positioned items)
 		GenerateObjectiveItemList(NumberOfItemsRequired, 1);
 		OnItemListUpdated.Broadcast(ItemList);
 		break;
@@ -170,9 +168,9 @@ void AVRGameMode::PrepareGameMode()
 		PlayerChar->DisableMenuComponents();
 		// initialise timer for round.
 		StartRoundTimer();
-		// generate list of required items (specifically high positioned items)
 		// enable player movement
 		PlayerChar->SetCanMove(true);
+		// generate list of required items (specifically high positioned items)
 		GenerateObjectiveItemList(NumberOfItemsRequired, 2);
 		OnItemListUpdated.Broadcast(ItemList);
 		break;
@@ -181,9 +179,9 @@ void AVRGameMode::PrepareGameMode()
 		PlayerChar->DisableMenuComponents();
 		// initialise timer for round.
 		StartRoundTimer();
-		// generate list of required items (items in any position)
 		// enable player movement
 		PlayerChar->SetCanMove(true);
+		// generate list of required items (items in any position)
 		GenerateObjectiveItemListFromAllItemLists();
 		OnItemListUpdated.Broadcast(ItemList);
 		break;

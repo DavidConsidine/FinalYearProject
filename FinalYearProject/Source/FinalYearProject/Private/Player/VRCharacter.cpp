@@ -17,23 +17,26 @@
 AVRCharacter::AVRCharacter()
 {
 	GetCapsuleComponent()->InitCapsuleSize(55.f, 96.0f);
+	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	GetCapsuleComponent()->SetCollisionResponseToAllChannels(ECR_Ignore);
 
 	VROrigin = CreateDefaultSubobject<USceneComponent>(TEXT("VROrigin"));
-	VROrigin->SetupAttachment(RootComponent);
+	
+	RootComponent = VROrigin;
+
+	//GetCapsuleComponent()->SetupAttachment(RootComponent);
+
 	CameraComp = CreateDefaultSubobject<UCameraComponent>(TEXT("CameraComp"));
-	CameraComp->SetupAttachment(VROrigin);
+	CameraComp->SetupAttachment(RootComponent);
 
 	// set up trigger volume
 	PickupTriggerVolumeComp = CreateDefaultSubobject<UBoxComponent>(TEXT("PickupTriggerVolumeComp"));
-	PickupTriggerVolumeComp->SetupAttachment(VROrigin);
-	//PickupTriggerVolumeComp->SetRelativeTransform(VROrigin->GetComponentTransform());
+	PickupTriggerVolumeComp->SetupAttachment(RootComponent);
+	
 	PickupTriggerVolumeComp->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 	PickupTriggerVolumeComp->SetCollisionResponseToAllChannels(ECR_Ignore);
 	PickupTriggerVolumeComp->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
 	PickupTriggerVolumeComp->OnComponentBeginOverlap.AddDynamic(this, &AVRCharacter::OnOverlapBegin);
-	
-
-	//GetCapsuleComponent()->SetupAttachment(RootComponent);
 
 	// setting default values
 	BaseTurnRate = 45.0f;
@@ -79,11 +82,15 @@ void AVRCharacter::DisableMenuComponents()
 	if (ModeSelectMenu != nullptr)
 	{
 		ModeSelectMenu->SetActorHiddenInGame(true);
+		ModeSelectMenu->SetActorEnableCollision(false);
+		ModeSelectMenu->SetActorTickEnabled(false);
 	}
 
 	if (PauseMenu != nullptr)
 	{
 		PauseMenu->SetActorHiddenInGame(true);
+		PauseMenu->SetActorEnableCollision(false);
+		PauseMenu->SetActorTickEnabled(false);
 	}
 
 	if (WidgetInteractionComp != nullptr && WidgetInteractionComp->bIsActive)
@@ -100,6 +107,8 @@ void AVRCharacter::EnableMenuComponents()
 		if (ModeSelectMenu != nullptr)
 		{
 			ModeSelectMenu->SetActorHiddenInGame(false);
+			ModeSelectMenu->SetActorEnableCollision(true);
+			ModeSelectMenu->SetActorTickEnabled(true);
 		}
 	}
 	else
@@ -107,11 +116,13 @@ void AVRCharacter::EnableMenuComponents()
 		if (PauseMenu != nullptr)
 		{
 			PauseMenu->SetActorHiddenInGame(false);
+			PauseMenu->SetActorEnableCollision(true);
+			PauseMenu->SetActorTickEnabled(true);
 		}
 	}
 	
 
-	if (WidgetInteractionComp != nullptr && WidgetInteractionComp->bIsActive)
+	if (WidgetInteractionComp != nullptr && !WidgetInteractionComp->bIsActive)
 	{
 		WidgetInteractionComp->Activate(true);
 	}
@@ -130,9 +141,8 @@ void AVRCharacter::BeginPlay()
 	{
 		// if anything needs to be done HMD related
 		//RootComponent = VROrigin;
-		SetRootComponent(VROrigin);
-		GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-		GetCapsuleComponent()->SetCollisionResponseToAllChannels(ECR_Ignore);
+		//SetRootComponent(VROrigin);
+		
 
 		FAttachmentTransformRules TriggerVolumeTransformRules(EAttachmentRule::KeepRelative, EAttachmentRule::KeepRelative, EAttachmentRule::KeepWorld, true);
 
@@ -509,8 +519,16 @@ void AVRCharacter::SetupPauseMenu()
 {
 	FActorSpawnParameters SpawnParams;
 	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-	FTransform MenuTransform = VRController_L->GetTransform();
-
+	FTransform MenuTransform;
+	if (ModeSelectMenu)
+	{
+		MenuTransform = ModeSelectMenu->GetActorTransform();
+	}
+	else
+	{
+		MenuTransform = VRController_L->GetActorTransform();
+	}
+		
 	PauseMenu = GetWorld()->SpawnActor<AActor>(PauseMenuClass, MenuTransform, SpawnParams);
 	if (PauseMenu != nullptr)
 	{
@@ -519,13 +537,6 @@ void AVRCharacter::SetupPauseMenu()
 		if (VRController_L)
 		{
 			PauseMenu->AttachToComponent(VRController_L->GetSkeletalMeshComponent(), PauseMenuTransformRules, "menu_pos");
-
-			// rotate widget so it's visible to player camera
-			FRotator NewRot = PauseMenu->GetActorRotation();
-			//NewRot.Add(90.0f, 180.0f, 90.0f);
-			NewRot.Add(90.0f, 180.0f, 90.0f);
-			PauseMenu->SetActorRotation(NewRot);
-
 			WidgetInteractionComp->SetActive(true);
 		}
 	}

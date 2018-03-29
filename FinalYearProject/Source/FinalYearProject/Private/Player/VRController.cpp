@@ -151,7 +151,6 @@ void AVRController::GrabObject()
 	if (CurrentPickupObject != nullptr)
 	{
 		CurrentPickupObject->Grab(MotionControllerMeshComp, "grab_pos");	// TODO: promote string here to a variable.
-		//CurrentPickupObject->SetGrabbed(true);
 	}
 }
 
@@ -160,7 +159,6 @@ void AVRController::DropObject()
 	if (CurrentPickupObject != nullptr)
 	{
 		CurrentPickupObject->Drop();
-		//CurrentPickupObject->SetGrabbed(false);
 		CurrentPickupObject = nullptr;
 	}
 }
@@ -326,8 +324,6 @@ void AVRController::DrawTeleportArc(const TArray<FVector>& TeleportArc)
 		if (TeleportSpineMeshPool.Num() <= 1)
 		{
 			USplineMeshComponent* SplineMesh = NewObject<USplineMeshComponent>(this);
-			//SplineMesh->SetMobility(EComponentMobility::Movable);
-			//SplineMesh->AttachToComponent(MotionControllerComp, FAttachmentTransformRules::KeepRelativeTransform);
 			SplineMesh->SetStaticMesh(TeleportSplineMesh);
 			SplineMesh->SetMaterial(0, TeleportSplineMaterial);
 			SplineMesh->RegisterComponent();

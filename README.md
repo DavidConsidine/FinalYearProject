@@ -2,6 +2,11 @@
 Prescribed Virtual Reality: An examination of the potential of VR applications in healthcare.
 Game Title: Off The Shelf: On The Move 
 
+## 32. Menu Fixes ##
+
+	- Menus now disable when not used.
+	- Clean up commented out code.
+	
 ## 31. Pause Menu ##
 
 	- Create WBP_PauseMenu.
