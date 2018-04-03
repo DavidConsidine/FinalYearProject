@@ -25,6 +25,12 @@ enum EGameMode
 // delegate to broadcast shopping list to ui in game
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FShoppingListBroadcastDelegate, const TArray<FString>&, ItemList);
 
+// delegate to broadcast change in game mode
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FGameModeChangeDelegate, EGameMode, NewGameMode);
+
+// delegate to broadcast game status (paused or unpaused)
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FGamePauseStatusDelegate, const bool, Paused);
+
 // delegate to broadcast mode reset.
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FGameResetDelegate);
 
@@ -126,6 +132,12 @@ public:
 
 	UPROPERTY()
 	FGameResetDelegate OnGameReset;
+
+	UPROPERTY()
+	FGameModeChangeDelegate OnGameModeChanged;
+
+	UPROPERTY()
+	FGamePauseStatusDelegate OnGamePauseStateChanged;
 
 	void PauseGame();
 

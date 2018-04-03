@@ -10,6 +10,8 @@
 
 class USceneComponent;
 class UStaticMeshComponent;
+class USoundCue;
+class UAudioComponent;
 
 UCLASS()
 class FINALYEARPROJECT_API ABasePickup : public APawn, public IPickupInterface
@@ -39,6 +41,10 @@ public:
 protected:
 	UPROPERTY(VisibleAnywhere, Category = "Mesh Component")
 	UStaticMeshComponent* MeshComp;
+
+	USoundCue* ItemSoundCue;
+
+	UAudioComponent* AudioComp;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Item Tag")
 	FString ItemTag;

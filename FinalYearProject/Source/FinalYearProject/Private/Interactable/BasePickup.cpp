@@ -4,6 +4,9 @@
 #include "Components/StaticMeshComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "VRGameMode.h"
+#include "ConstructorHelpers.h"
+#include "Sound/SoundCue.h"
+#include "Components/AudioComponent.h"
 
 // Sets default values
 ABasePickup::ABasePickup()
@@ -17,6 +20,17 @@ ABasePickup::ABasePickup()
 	MeshComp->SetSimulatePhysics(true);
 
 	bGrabbed = false;
+
+	// code dealing with setting up sound.
+	static ConstructorHelpers::FObjectFinder<USoundCue> SoundCue(TEXT("'/Engine/VREditor/Sounds/VR_open_Cue.VR_open_Cue'"));
+
+	ItemSoundCue = SoundCue.Object;
+
+	AudioComp = CreateDefaultSubobject<UAudioComponent>(TEXT("AudioComp"));
+	AudioComp->bAutoActivate = false;
+	AudioComp->SetupAttachment(RootComponent);
+
+
 }
 
 
@@ -81,8 +95,8 @@ void ABasePickup::AddedToBasket()
 void ABasePickup::RemoveFromBasket()
 {
 	// play sound
-
-	// TODO: store reset location, disable object and move back to original position for mode reset.
+	AudioComp->Play();
+	
 	SetActorHiddenInGame(true);
 	MeshComp->SetSimulatePhysics(false);
 	MeshComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
@@ -100,6 +114,12 @@ void ABasePickup::BeginPlay()
 		{
 			GM->OnGameReset.AddDynamic(this, &ABasePickup::ResetVisibilityAndPosition);
 		}
+	}
+
+	// attach sound cue to audio component
+	if (ItemSoundCue->IsValidLowLevelFast())
+	{
+		AudioComp->SetSound(ItemSoundCue);
 	}
 }
 

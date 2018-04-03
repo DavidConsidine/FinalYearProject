@@ -2,6 +2,12 @@
 Prescribed Virtual Reality: An examination of the potential of VR applications in healthcare.
 Game Title: Off The Shelf: On The Move 
 
+## 35. Sound Cue Implementation ##
+
+	- Add two delegates to Game mode class.
+	- Add Sound Cue and Audio Component to BasePickupClass.
+	- Add Sound Cue to ShopFloor_P level blueprint.
+
 ## 34. Import Assets ##
 
 	- Import Assets. Create corresponding blueprints.

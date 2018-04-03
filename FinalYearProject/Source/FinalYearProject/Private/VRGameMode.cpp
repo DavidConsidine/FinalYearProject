@@ -27,7 +27,7 @@ EGameMode AVRGameMode::GetCurrentGameMode()
 void AVRGameMode::SetCurrentGameMode(EGameMode NewGameMode)
 {
 	CurrentGameMode = NewGameMode;
-
+	OnGameModeChanged.Broadcast(NewGameMode);
 	PrepareGameMode();
 }
 
@@ -234,6 +234,7 @@ void AVRGameMode::RepositionPlayer()
 
 void AVRGameMode::PauseGame()
 {
+	OnGamePauseStateChanged.Broadcast(true);
 	PlayerChar->SetCanMove(false);
 	UWorld * World = GetWorld();
 	if (World)
@@ -247,6 +248,7 @@ void AVRGameMode::PauseGame()
 
 void AVRGameMode::ResumeGame()
 {
+	OnGamePauseStateChanged.Broadcast(false);
 	PlayerChar->SetCanMove(true);
 	PlayerChar->DisableMenuComponents();
 	UWorld * World = GetWorld();
