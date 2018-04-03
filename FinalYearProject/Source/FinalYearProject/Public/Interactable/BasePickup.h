@@ -37,10 +37,10 @@ public:
 	void AddedToBasket();
 	
 protected:
-	UPROPERTY(VisibleDefaultsOnly, Category = "Mesh Component")
+	UPROPERTY(VisibleAnywhere, Category = "Mesh Component")
 	UStaticMeshComponent* MeshComp;
 
-	UPROPERTY(EditAnywhere, Category = "Item Tag")
+	UPROPERTY(EditDefaultsOnly, Category = "Item Tag")
 	FString ItemTag;
 
 	FTransform StartingTransform;

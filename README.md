@@ -2,6 +2,11 @@
 Prescribed Virtual Reality: An examination of the potential of VR applications in healthcare.
 Game Title: Off The Shelf: On The Move 
 
+## 34. Import Assets ##
+
+	- Import Assets. Create corresponding blueprints.
+	- Work on Level Design.
+
 ## 33. Stress Test ##
 
 	- Stress game with high volume of assets.
