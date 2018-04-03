@@ -22,7 +22,7 @@ ABasePickup::ABasePickup()
 	bGrabbed = false;
 
 	// code dealing with setting up sound.
-	static ConstructorHelpers::FObjectFinder<USoundCue> SoundCue(TEXT("'/Engine/VREditor/Sounds/VR_open_Cue.VR_open_Cue'"));
+	static ConstructorHelpers::FObjectFinder<USoundCue> SoundCue(TEXT("'/Game/Audio/A_Pickup_SC.A_Pickup_SC'"));
 
 	ItemSoundCue = SoundCue.Object;
 
