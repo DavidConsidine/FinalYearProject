@@ -2,6 +2,11 @@
 Prescribed Virtual Reality: An examination of the potential of VR applications in healthcare.
 Game Title: Off The Shelf: On The Move 
 
+## 37. Final Tweaks for Demo Day ##
+
+	- Adjust Level layout.
+	- Adjust displays and game timer.
+
 ## 36. Audio Assets ##
 
 	- Add Audio files to project.
